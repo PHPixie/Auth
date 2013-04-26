@@ -1,11 +1,13 @@
 <?php
 
+namespace PHPixie\Auth\Login;
+
 /**
  * Facebook login provider
  *
  * @package    Auth
  */
-class Facebook_Login_Auth extends Login_Auth {
+class Facebook extends Provider {
 	
 	/**
 	 * App ID of the facebook app
@@ -64,6 +66,8 @@ class Facebook_Login_Auth extends Login_Auth {
 	 */
 	protected $token_expires_key;
 	
+	protected $name = 'facebook';
+	
 	/**
 	 * Constructs facebook login provider for the specified configuration.
 	 * 
@@ -72,12 +76,12 @@ class Facebook_Login_Auth extends Login_Auth {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct($auth, $config) {
-		parent::__construct($auth, $config);
-		$this->app_id = Config::get($this->config_prefix."app_id");
-		$this->app_secret = Config::get($this->config_prefix."app_secret");
-		$this->permissions = Config::get($this->config_prefix."permissions",array());
-		$this->fbid_field = Config::get($this->config_prefix."fbid_field");
+	public function __construct($pixie, $service, $config) {
+		parent::__construct($pixie, $service, $config);
+		$this->app_id = $pixie->config->get($this->config_prefix."app_id");
+		$this->app_secret = $pixie->config->get($this->config_prefix."app_secret");
+		$this->permissions = $pixie->config->get($this->config_prefix."permissions",array());
+		$this->fbid_field = $pixie->config->get($this->config_prefix."fbid_field");
 		
 		$this->access_token_key = "auth_{$config}_facebook_token";
 		$this->token_expires_key = "auth_{$config}_facebook_token_expires";
@@ -96,14 +100,14 @@ class Facebook_Login_Auth extends Login_Auth {
 		$user = json_decode($data);
 		
 		if(isset($user->id)){
-			$user = $this->auth->user_model()->where($this->fbid_field, $user->id)->find();
+			$user = $this->service->user_model()->where($this->fbid_field, $user->id)->find();
 			if ($user->loaded()) {
 				$this->set_user($user, $access_token, $token_lifetime);
 				return true;
 			}
 		}
 		
-		return false;		
+		return false;
 	}
 	
 	/**
@@ -125,8 +129,8 @@ class Facebook_Login_Auth extends Login_Auth {
 			$this->token_expires = $token_lifetime?(time() + $token_lifetime):null;
 		}
 		
-		Session::set($this->access_token_key, $this->access_token);
-		Session::set($this->token_expires_key, $this->token_expires);
+		$this->pixie->session->set($this->access_token_key, $this->access_token);
+		$this->pixie->session->set($this->token_expires_key, $this->token_expires);
 	}
 	
 	/**
@@ -139,8 +143,8 @@ class Facebook_Login_Auth extends Login_Auth {
 	 */
 	public function logout() {
 		parent::logout();
-		Session::remove($this->access_token_key);
-		Session::remove($this->token_expires_key);
+		$this->pixie->session->remove($this->access_token_key);
+		$this->pixie->session->remove($this->token_expires_key);
 	}
 	
 	/**
@@ -153,8 +157,8 @@ class Facebook_Login_Auth extends Login_Auth {
 	public function check_login() {
 	
 		if (parent::check_login()) {
-			$this->access_token = Session::get($this->access_token_key);
-			$this->token_expires = Session::get($this->token_expires_key);
+			$this->access_token = $this->pixie->session->get($this->access_token_key);
+			$this->token_expires = $this->pixie->session->get($this->token_expires_key);
 			return true;
 		}
 		
@@ -221,7 +225,7 @@ class Facebook_Login_Auth extends Login_Auth {
 		));
 		$response = curl_exec($ch);
 		if($response === false)
-			throw new Exception("URL request failed:".curl_error($ch));
+			throw new \Exception("URL request failed:".curl_error($ch));
 			
 		return $response;
 	}

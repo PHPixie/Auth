@@ -1,5 +1,7 @@
 <?php
 
+namespace PHPixie\Auth;
+
 /**
  * Authroization and access control module for PHPixie.
  *
@@ -22,11 +24,17 @@
  * @link https://github.com/dracony/PHPixie-Auth Download this module from Github
  * @package    Auth
  */
-class Auth {
+class Service {
 
 	/**
+	 * Pixie Dependancy Container
+	 * @var \PHPixie\Pixie
+	 */
+	public $pixie;
+	
+	/**
 	 * ORM model that represents a user 
-	 * @var ORM
+	 * @var \PHPixie\ORM\Model
 	 * @access protected
 	 */
 	protected $model;
@@ -36,7 +44,7 @@ class Auth {
 	 * @var ORM
 	 * @access public
 	 */
-	public $user;
+	protected $user;
 	
 	/**
 	 * Name of the login provider that
@@ -44,7 +52,7 @@ class Auth {
 	 * @var string
 	 * @access public
 	 */
-	public $logged_with;
+	protected $logged_with;
 	
 	/**
 	 * Login providers array.
@@ -55,17 +63,11 @@ class Auth {
 	
 	/**
 	 * User role driver
-	 * @var Role_Auth
+	 * @var \PHPixie\Auth\Role
 	 * @access public
 	 */
 	protected $role_driver;
 	
-	/**
-	 * Array of initialized Auth instances.
-	 * @var array
-	 * @access public
-	 */
-	protected static $_instances;
 	
 	/**
 	 * Constructs an Auth instance for the specified configuration.
@@ -73,24 +75,22 @@ class Auth {
 	 * @param string $config Name of the configuration.
 	 * @return void
 	 * @access public
+	 * @throw
 	 */
-	protected function __construct($config = 'default') {
-		$this->model = Config::get("auth.{$config}.model");
+	public function __construct($pixie, $config = 'default') {
+		$this->pixie = $pixie;
+		$this->model = $pixie->config->get("auth.{$config}.model");
 		
-		$login_providers = Config::get("auth.{$config}.login", false);
+		$login_providers = $pixie->config->get("auth.{$config}.login", false);
 		if (!$login_providers)
-			throw new Exception("No login providers have been configured.");
+			throw new \Exception("No login providers have been configured.");
 			
-		foreach(array_keys($login_providers) as $provider) {
-			$provider_class = $provider."_Login_Auth";
-			$this->login_providers[$provider] = new $provider_class($this,$config);
-		}
+		foreach(array_keys($login_providers) as $provider) 
+			$this->login_providers[$provider] = $pixie->auth->build_login($provider, $this, $config);
 		
-		$role_driver = Config::get("auth.{$config}.roles.driver", false);
-		if ($role_driver) {
-			$role_driver = $role_driver."_Role_Auth";
-			$this->role_driver = new $role_driver($config);
-		}
+		$role_driver = $pixie->config->get("auth.{$config}.roles.driver", false);
+		if ($role_driver)
+			$this->role_driver = $pixie->auth->build_role($role_driver, $config);
 		
 		$this->check_login();
 	}
@@ -107,6 +107,14 @@ class Auth {
 	public function set_user($user, $logged_with) {
 		$this->user = $user;
 		$this->logged_with = $logged_with;
+	}
+	
+	public function user() {
+		return $this->user;
+	}
+	
+	public function logged_with() {
+		return $this->logged_with;
 	}
 	
 	/**
@@ -126,12 +134,12 @@ class Auth {
 	 *
 	 * @param string $role Role to check for.
 	 * @return bool If the user has the specified role
-	 * @throws Exception If the role driver is not specified
+	 * @throws \Exception If the role driver is not specified
 	 * @access public
 	 */
 	public function has_role($role) {
 		if ($this->role_driver == null)
-			throw new Exception("No role configuration is present.");
+			throw new \Exception("No role configuration is present.");
 		
 		if ($this->user == null)
 			return false;
@@ -158,7 +166,7 @@ class Auth {
 	 * @return bool if the user is logged in
 	 * @access public
 	 */
-	protected function check_login() {
+	public function check_login() {
 		foreach($this->login_providers as $provider)
 			if ($provider->check_login())
 				return true;
@@ -173,20 +181,7 @@ class Auth {
 	 * @access public
 	 */
 	public function user_model() {
-		return ORM::factory($this->model);
+		return $this->pixie->orm->get($this->model);
 	}
 
-	/**
-	 * Returns an instance of the Auth class for the specified config.
-	 *
-	 * @param string $config Name of the configuration.
-	 * @return Auth Auth instance
-	 * @static
-	 * @access public
-	 */
-	public static function instance($config = 'default') {
-		if(!isset(static::$_instances[$config]))
-			static::$_instances[$config] = new static($config);
-		return static::$_instances[$config];
-	}
 }

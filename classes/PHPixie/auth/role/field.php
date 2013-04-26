@@ -1,12 +1,14 @@
 <?php
 
+namespace PHPixie\Auth\Role;
+
 /**
  * Manages roles based on a field in the users table.
  * The specified field must hold the name of the model
  *
  * @package    Auth
  */
-class Field_Role_Auth implements Role_Auth {
+class Field extends Driver {
 
 	/**
 	 * Name of the role field
@@ -22,8 +24,9 @@ class Field_Role_Auth implements Role_Auth {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct($config) {
-		$this->field = Config::get("auth.{$config}.roles.field");
+	public function __construct($pixie, $config) {
+		parent::__construct($pixie, $config);
+		$this->field = $pixie->config->get("auth.{$config}.roles.field");
 	}
 	
 	/**

@@ -1,18 +1,26 @@
 <?php
 
+namespace PHPixie\Auth\Login;
+
 /**
  * Abstract class for handling user login.
  *
  * @package    Auth
  */
-abstract class Login_Auth {
+abstract class Provider {
 
+	/**
+	 * Pixie Dependancy Container
+	 * @var \PHPixie\Pixie
+	 */
+	public $pixie;
+	
 	/**
 	 * Auth class that this login provider belongs to.
 	 * @var Auth
 	 * @access protected
 	 */
-	public $auth;
+	public $service;
 	
 	protected $name;
 	protected $config_prefix;
@@ -26,9 +34,9 @@ abstract class Login_Auth {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct($auth, $config) {
-		$this->auth = $auth;
-		$this->name = substr(strtolower(get_class($this)), 0, -11);
+	public function __construct($pixie, $service, $config) {
+		$this->pixie = $pixie;
+		$this->service = $service;
 		$this->config_prefix = "auth.{$config}.login.{$this->name}.";
 		$this->user_id_key = "auth_{$config}_{$this->name}_uid";
 	}
@@ -43,7 +51,7 @@ abstract class Login_Auth {
 	 * @return void
 	 */
 	public function logout() {
-		Session::remove($this->user_id_key);
+		$this->pixie->session->remove($this->user_id_key);
 	}
 
 	/**
@@ -56,8 +64,8 @@ abstract class Login_Auth {
 	 * @access public
 	 */
 	public function set_user($user) {
-		Session::set($this->user_id_key, $user->id());
-		$this->auth->set_user($user, $this->name);
+		$this->pixie->session->set($this->user_id_key, $user->id());
+		$this->service->set_user($user, $this->name);
 	}
 
 	/**
@@ -70,12 +78,12 @@ abstract class Login_Auth {
 	 * @access public
 	 */
 	public function check_login() {
-		$user_id = Session::get($this->user_id_key);
+		$user_id = $this->pixie->session->get($this->user_id_key);
 		if ($user_id) {
-			$user = $this->auth->user_model();
+			$user = $this->service->user_model();
 			$user = $user->where($user->id_field, $user_id)->find();
 			if ($user->loaded()){
-				$this->auth->set_user($user, $this->name);
+				$this->service->set_user($user, $this->name);
 				return true;
 			}
 		}

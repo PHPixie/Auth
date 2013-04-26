@@ -1,12 +1,14 @@
 <?php
 
+namespace PHPixie\Auth\Role;
+
 /**
  * Manages roles based on an ORM relationship.
  * Supports belongs_to and has_many relationships.
  *
  * @package    Auth
  */
-class Relation_Role_Auth implements Role_Auth {
+class Relation extends Driver {
 
 	/**
 	 * Name of the role relation
@@ -37,10 +39,11 @@ class Relation_Role_Auth implements Role_Auth {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct($config) {
-		$this->relation = Config::get("auth.{$config}.roles.relation");
-		$this->name_field = Config::get("auth.{$config}.roles.name_field");
-		$this->type = Config::get("auth.{$config}.roles.type");
+	public function __construct($pixie, $config) {
+		parent::__construct($pixie, $config);
+		$this->relation = $pixie->config->get("auth.{$config}.roles.relation");
+		$this->name_field = $pixie->config->get("auth.{$config}.roles.name_field");
+		$this->type = $pixie->config->get("auth.{$config}.roles.type");
 	}
 	
 	/**
@@ -64,6 +67,6 @@ class Relation_Role_Auth implements Role_Auth {
 		if ($this->type = 'belongs_to')
 			return $user->$relation->$field == $role;
 
-		throw new Exception("The relationship must be either of has_many or has_one type");
+		throw new \Exception("The relationship must be either of has_many or has_one type");
 	}
 }

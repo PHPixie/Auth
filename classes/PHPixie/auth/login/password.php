@@ -1,9 +1,11 @@
 <?php
 
+namespace PHPixie\Auth\Login;
+
 /**
  * Password login provider using salted password hashes.
  */
-class Password_Login_Auth extends Login_Auth {
+class Password extends Provider {
 
 	/**
 	 * Field in the users table where the users
@@ -29,6 +31,8 @@ class Password_Login_Auth extends Login_Auth {
 	 */
 	protected $hash_method;
 	
+	protected $name = 'password';
+	
 	/**
 	 * Constructs password login provider for the specified configuration.
 	 * 
@@ -37,11 +41,11 @@ class Password_Login_Auth extends Login_Auth {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct($auth, $config) {
-		parent::__construct($auth, $config);
-		$this->login_field = Config::get($this->config_prefix."login_field");
-		$this->password_field = Config::get($this->config_prefix."password_field");
-		$this->hash_method = Config::get($this->config_prefix."hash_method",'md5');
+	public function __construct($pixie, $service, $config) {
+		parent::__construct($pixie, $service, $config);
+		$this->login_field = $pixie->config->get($this->config_prefix."login_field");
+		$this->password_field = $pixie->config->get($this->config_prefix."password_field");
+		$this->hash_method = $pixie->config->get($this->config_prefix."hash_method",'md5');
 	}
 	
 	/**
@@ -53,7 +57,7 @@ class Password_Login_Auth extends Login_Auth {
 	 * @return bool If the user exists.
 	 */
 	public function login($login, $password) {
-		$user = $this->auth->user_model()
+		$user = $this->service->user_model()
 						->where($this->login_field, $login)
 						->find();
 		if($user->loaded()){

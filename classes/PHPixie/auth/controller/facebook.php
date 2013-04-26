@@ -1,5 +1,7 @@
 <?php
 
+namespace PHPixie\Auth\Controller;
+
 /**
  * Abstract Facebook login controller. To use it you need to extend this class
  * and override the new_user() method, which handles the situation when a user
@@ -12,7 +14,7 @@
  * Optionally you can pass a ?return_url =<url> parameter to specify where to redirect the
  * user after he is logged in. You can also specify a default redirect url in the auth.php config file.
  */
-abstract class Facebook_Auth_Controller extends Controller {
+abstract class Facebook extends \PHPixie\Controller {
 
 	/**
 	 * Facebook login provider to log the user in
@@ -50,8 +52,8 @@ abstract class Facebook_Auth_Controller extends Controller {
 	 */
 	public function before() {
 		$config = $this->request->param('config', 'default');
-		$this->provider = Auth::instance($config)->provider('facebook');
-		$this->default_return_url = Config::get("auth.{$config}.login.facebook.return_url", null);
+		$this->provider = $this->pixie->auth->provider('facebook', $config);
+		$this->default_return_url = $this->pixie->config->get("auth.{$config}.login.facebook.return_url", null);
 		$this->state_key = "auth_{$config}_facebook_state";
 		$this->return_url_key = "auth_{$config}_facebook_return";
 	}
@@ -90,21 +92,20 @@ abstract class Facebook_Auth_Controller extends Controller {
 		if ($error = $this->request->get('error'))
 			return $this->error($display_mode);
 	
-		
 		if ($code = $this->request->get('code')) {
 		
-			$state = Session::get($this->state_key, false);
+			$state = $this->pixie-> session->get($this->state_key, false);
 			if (!$state || $state != $this->request->get('state'))
 				return $this->error($display_mode);
 			
 			$params = $this->provider->exchange_code($code, $this->request->url());
-			Session::remove($this->state_key);
+			$this->pixie->session->remove($this->state_key);
 			
 			return $this->success($params, $display_mode);
 		}
 		
 		$state = md5(uniqid(rand(), true));
-		Session::set($this->state_key, $state);
+		$this->pixie->session->set($this->state_key, $state);
 		$return_url = $this->request->get('return_url', $this->default_return_url);
 		
 		if (!$return_url && $display_mode == 'page'){
@@ -113,7 +114,7 @@ abstract class Facebook_Auth_Controller extends Controller {
 				$return_url = 'http://'.$this->request->server('HTTP_HOST');
 		}
 		
-		Session::set($this->return_url_key, $return_url);
+		$this->pixie->session->set($this->return_url_key, $return_url);
 		$url = $this->provider->login_url($state, $this->request->url(), $display_mode);
 		$this->response->redirect($url);
 	}
@@ -128,7 +129,7 @@ abstract class Facebook_Auth_Controller extends Controller {
 	 */
 	public function error($display_mode) {
 	
-		Session::remove($this->state_key);
+		$this->pixie->session->remove($this->state_key);
 		$this->return_to_url($display_mode);
 	}
 	
@@ -143,7 +144,8 @@ abstract class Facebook_Auth_Controller extends Controller {
 	 * @return void
 	 */
 	public function success($params, $display_mode) {
-		$return_url = Session::get($this->return_url_key);
+		
+		$return_url = $this->pixie->session->get($this->return_url_key);
 		if ($this->provider->login($params['access_token'])) {
 			$this->return_to_url($display_mode, $return_url);
 		}else {
@@ -164,7 +166,7 @@ abstract class Facebook_Auth_Controller extends Controller {
 	 */
 	public function return_to_url($display_mode, $return_url = null) {
 		if ($display_mode == 'popup') {
-			$view = View::get('auth/oauth');
+			$view = $this->pixie->view('auth/oauth');
 			$view->return_url = $return_url;
 			$this->response-> body = $view->render();
 		}else {
