@@ -16,23 +16,35 @@ abstract class Provider {
 	public $pixie;
 	
 	/**
-	 * Auth class that this login provider belongs to.
-	 * @var Auth
-	 * @access protected
+	 * Service instance that this login provider belongs to.
+	 * @var \PHPixie\Auth\Service
 	 */
 	public $service;
 	
+	/**
+	 * Name of the login provider
+	 * @var string
+	 */
 	protected $name;
+	
+	/**
+	 * Prefix for fetching configuration options
+	 * @var string
+	 */
 	protected $config_prefix;
+	
+	/**
+	 * Session key of the users id
+	 * @var string
+	 */
 	protected $user_id_key;
 	
 	/**
-	 * Constructs this login provider for the specified configuration.
+	 * Constructs password login provider for the specified configuration.
 	 * 
-	 * @param Auth $auth Auth instance that this login provider belongs to.
+	 * @param \PHPixie\Pixie $pixie Pixie dependency container
+	 * @param \PHPixie\Pixie\Service $service Service instance that this login provider belongs to.
 	 * @param string $config Name of the configuration
-	 * @access public
-	 * @return void
 	 */
 	public function __construct($pixie, $service, $config) {
 		$this->pixie = $pixie;
@@ -47,7 +59,6 @@ abstract class Provider {
 	 * The default implementation deletes the 
 	 * session variable holding the user id.
 	 *
-	 * @access public
 	 * @return void
 	 */
 	public function logout() {
@@ -59,9 +70,8 @@ abstract class Provider {
 	 * The default implementation stores the users id
 	 * in a session variable.
 	 * 
-	 * @param ORM $user Logged in user
+	 * @param \PHPixie\ORM\Model $user Logged in user
 	 * @return void
-	 * @access public
 	 */
 	public function set_user($user) {
 		$this->pixie->session->set($this->user_id_key, $user->id());
@@ -70,12 +80,11 @@ abstract class Provider {
 
 	/**
 	 * Checks if the user is logged in with this login provider, if so
-	 * notifies the associated Auth instance about it.
+	 * notifies the associated Service instance about it.
 	 * This default implementation operates based on a session key
 	 * holding user id. 
 	 * 
 	 * @return bool If the user is logged in
-	 * @access public
 	 */
 	public function check_login() {
 		$user_id = $this->pixie->session->get($this->user_id_key);

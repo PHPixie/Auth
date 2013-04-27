@@ -13,16 +13,14 @@ class Field extends Driver {
 	/**
 	 * Name of the role field
 	 * @var string
-	 * @access protected
 	 */
 	protected $field;
 	
 	/**
-	 * Constructs this role strategy for the specified configuration.
+	 * Constructs this role strategy for the specified configuration
 	 * 
+	 * @param \PHPixie\Pixie $pixie Pixie dependency container
 	 * @param string $config Name of the configuration
-	 * @access public
-	 * @return void
 	 */
 	public function __construct($pixie, $config) {
 		parent::__construct($pixie, $config);
@@ -30,11 +28,10 @@ class Field extends Driver {
 	}
 	
 	/**
-	 * Checks if the user belongs to the specified role.
+	 * Checks if the user belongs to the specified role
 	 * 
-	 * @param ORM $user User to check the role for
+	 * @param \PHPixie\ORM\Model $user User to check the role for
 	 * @param string $role Role name to check for
-	 * @access public
 	 * @return bool If the user belongs to the specified role
 	 */
 	public function has_role($user, $role) {

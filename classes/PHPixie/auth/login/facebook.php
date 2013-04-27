@@ -12,21 +12,18 @@ class Facebook extends Provider {
 	/**
 	 * App ID of the facebook app
 	 * @var string
-	 * @access protected
 	 */
 	protected $app_id;
 	
 	/**
 	 * App Secret of the facebook app
 	 * @var string
-	 * @access protected
 	 */
 	protected $app_secret;
 	
 	/**
 	 * Permissions to request
 	 * @var array
-	 * @access protected
 	 */
 	protected $permissions;
 	
@@ -34,47 +31,45 @@ class Facebook extends Provider {
 	 * Field in the users table where the users
 	 * facebook id is stored.
 	 * @var string
-	 * @access protected
 	 */
 	protected $fbid_field;
 	
 	/**
 	 * Users access token
 	 * @var string
-	 * @access protected
 	 */
 	public $access_token;
 	
 	/**
 	 * Token expiry time
-	 * @var string
-	 * @access protected
+	 * @var int
 	 */
 	public $token_expires;
 	
 	/**
 	 * Session key to store the token in
 	 * @var string
-	 * @access protected
 	 */
 	protected $access_token_key;
 	
 	/**
 	 * Session key to store token expiry time in
 	 * @var string
-	 * @access protected
 	 */
 	protected $token_expires_key;
 	
+	/**
+	 * Name of the login provider
+	 * @var string
+	 */
 	protected $name = 'facebook';
 	
 	/**
-	 * Constructs facebook login provider for the specified configuration.
+	 * Constructs password login provider for the specified configuration.
 	 * 
-	 * @param Auth $auth Auth instance that this login provider belongs to.
+	 * @param \PHPixie\Pixie $pixie Pixie dependency container
+	 * @param \PHPixie\Pixie\Service $service Service instance that this login provider belongs to.
 	 * @param string $config Name of the configuration
-	 * @access public
-	 * @return void
 	 */
 	public function __construct($pixie, $service, $config) {
 		parent::__construct($pixie, $service, $config);
@@ -92,7 +87,6 @@ class Facebook extends Provider {
 	 * 
 	 * @param string $access_token Users access token
 	 * @param int $token_lifetime Amount of seconds until the token expires
-	 * @access public
 	 * @return bool If the user exists.
 	 */
 	public function login($access_token, $token_lifetime = null) {
@@ -115,11 +109,10 @@ class Facebook extends Provider {
 	 * Stores users id, his token and token expiry time
 	 * inside the session.
 	 * 
-	 * @param ORM $user Logged in user
+	 * @param \PHPixie\ORM\Model $user Logged in user
 	 * @param string $access_token Users access token
 	 * @param int $token_lifetime Token lifetime
 	 * @return void
-	 * @access public
 	 */
 	public function set_user($user, $access_token = null, $token_lifetime = null) {
 		parent::set_user($user);
@@ -138,7 +131,6 @@ class Facebook extends Provider {
 	 * Also clears session variables associated with
 	 * the users access token.
 	 * 
-	 * @access public
 	 * @return void
 	 */
 	public function logout() {
@@ -149,10 +141,9 @@ class Facebook extends Provider {
 	
 	/**
 	 * Checks if the user is logged in with facebook, if so
-	 * notifies the associated Auth instance about it.
+	 * notifies the associated Service instance about it.
 	 * 
 	 * @return bool If the user is logged in
-	 * @access public
 	 */
 	public function check_login() {
 	
@@ -172,7 +163,6 @@ class Facebook extends Provider {
 	 * @param string $return_url URL to return the user after he authorizes the app.
 	 * @param string $display_mode Determines the facebook page look.
 	 *                             Can be either 'page' or 'popup'
-	 * @access public
 	 * @return string Login url.
 	 */
 	public function login_url($state, $return_url, $display_mode) {
@@ -189,7 +179,6 @@ class Facebook extends Provider {
 	 * 
 	 * @param string $code OAuth code
 	 * @param string $return_url URL to return the user after he authorizes the app.
-	 * @access public
 	 * @return array Parsed result of the facebook call.
 	 */
 	public function exchange_code($code, $return_url) {
@@ -208,9 +197,8 @@ class Facebook extends Provider {
 	 * 
 	 * @param string $url URL to fetch
 	 * @param string $return_url URL to return the user after he authorizes the app.
-	 * @access public
 	 * @return array Parsed result of the facebook call.
-	 * @throws Exception If the request failed
+	 * @throws \Exception If the request failed
 	 */
 	public function request($url) {
 		$ch = curl_init();

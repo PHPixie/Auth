@@ -11,7 +11,6 @@ class Password extends Provider {
 	 * Field in the users table where the users
 	 * login is stored.
 	 * @var string
-	 * @access protected
 	 */
 	protected $login_field;
 	
@@ -19,7 +18,6 @@ class Password extends Provider {
 	 * Field in the users table where the users
 	 * password is stored.
 	 * @var string
-	 * @access protected
 	 */
 	protected $password_field;
 	
@@ -27,19 +25,21 @@ class Password extends Provider {
 	 * Hash algorithm to use. If not set
 	 * the passwords are saved without hashing.
 	 * @var string
-	 * @access protected
 	 */
 	protected $hash_method;
 	
+	/**
+	 * Name of the login provider
+	 * @var string
+	 */
 	protected $name = 'password';
 	
 	/**
 	 * Constructs password login provider for the specified configuration.
 	 * 
-	 * @param Auth $auth Auth instance that this login provider belongs to.
+	 * @param \PHPixie\Pixie $pixie Pixie dependency container
+	 * @param \PHPixie\Pixie\Service $service Service instance that this login provider belongs to.
 	 * @param string $config Name of the configuration
-	 * @access public
-	 * @return void
 	 */
 	public function __construct($pixie, $service, $config) {
 		parent::__construct($pixie, $service, $config);
@@ -49,11 +49,10 @@ class Password extends Provider {
 	}
 	
 	/**
-	 * Attempts to log the user in using his login and password.
+	 * Attempts to log the user in using his login and password
 	 * 
 	 * @param string $login Users login
 	 * @param string $password Users password
-	 * @access public
 	 * @return bool If the user exists.
 	 */
 	public function login($login, $password) {
@@ -78,10 +77,9 @@ class Password extends Provider {
 	}
 
 	/**
-	 * Hashes the password using the configured method.
+	 * Hashes the password using the configured method
 	 * 
 	 * @param string $password Password to hash
-	 * @access public
 	 * @return string Hashed password
 	 */
 	public function hash_password($password){

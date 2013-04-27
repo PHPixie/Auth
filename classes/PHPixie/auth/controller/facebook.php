@@ -18,36 +18,31 @@ abstract class Facebook extends \PHPixie\Controller {
 
 	/**
 	 * Facebook login provider to log the user in
-	 * @var Facebook_Login_Auth
-	 * @access protected
+	 * @var \PHPixie\Auth\Login\Facebook
 	 */
 	protected $provider;
 	
 	/**
 	 * Session key to save the CSRF protection state value.
 	 * @var string
-	 * @access protected
 	 */
 	protected $state_key;
 	
 	/**
 	 * Session key to save return URL in.
 	 * @var string
-	 * @access protected
 	 */
 	protected $return_url_key;
 	
 	/**
 	 * Default url to return to.
 	 * @var string
-	 * @access protected
 	 */
 	protected $default_return_url;
 	
 	/*
 	 * Initializes the controller oarameters
 	 * 
-	 * @access public
 	 * @return void
 	 */
 	public function before() {
@@ -61,7 +56,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	/*
 	 * Used to login user using a popup window.
 	 * 
-	 * @access public
 	 * @return void
 	 */
 	public function action_popup() {
@@ -72,7 +66,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 * Used to login user using the 'page' mode.
 	 * E.g redirecting him to facebook and back.
 	 * 
-	 * @access public
 	 * @return void
 	 */
 	public function action_index() {
@@ -84,7 +77,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 * 
 	 * @param string $display_mode Display mode of the facebook login.
 	 *                             Either 'page' or 'popup'
-	 * @access public
 	 * @return void
 	 */
 	public function handle_request($display_mode) {
@@ -124,7 +116,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 * 
 	 * @param string $display_mode Display mode of the facebook login.
 	 *                             Either 'page' or 'popup'
-	 * @access public
 	 * @return void
 	 */
 	public function error($display_mode) {
@@ -140,7 +131,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 *                      Access token is under the 'access_token' key.
 	 * @param string $display_mode Display mode of the facebook login.
 	 *                             Either 'page' or 'popup'
-	 * @access public
 	 * @return void
 	 */
 	public function success($params, $display_mode) {
@@ -161,7 +151,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 * @param string $display_mode Display mode of the facebook login.
 	 *                             Either 'page' or 'popup'
 	 * @param string $return_url Return URL to redirect the user after.
-	 * @access public
 	 * @return void
 	 */
 	public function return_to_url($display_mode, $return_url = null) {
@@ -184,7 +173,6 @@ abstract class Facebook extends \PHPixie\Controller {
 	 * @param string $return_url Return URL to redirect the user after.
 	 * @param string $display_mode Display mode of the facebook login.
 	 *                             Either 'page' or 'popup'
-	 * @access public
 	 * @return void
 	 */
 	public abstract function new_user($access_token, $return_url, $display_mode);

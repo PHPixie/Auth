@@ -7,9 +7,22 @@ namespace PHPixie;
  *
  * This module is not included by default, download it here:
  *
+ * This module is not included by default, install it using Composer
+ * by adding
+ * <code>
+ * 		"phpixie/auth": "2.*@dev"
+ * </code>
+ * to your requirement definition. Or download it from
  * https://github.com/dracony/PHPixie-Auth
  * 
- * To enable it add 'auth' to modules array in /application/config/core.php.
+ * To enable it add it to your Pixie class' modules array:
+ * <code>
+ * 		protected $modules = array(
+ * 			//Other modules ...
+ * 			'auth' => '\PHPixie\Auth',
+ * 		);
+ * </code>
+ *
  * This modules let's you log in users using different login providers.
  * Currently two login providers are supported, for the usual login/password
  * login and Facebook authentication.
@@ -27,60 +40,53 @@ namespace PHPixie;
 class Auth {
 
 	/**
-	 * Pixie Dependancy Container
+	 * Pixie Dependency Container
 	 * @var \PHPixie\Pixie
 	 */
 	public $pixie;
 	
 	/**
 	 * ORM model that represents a user 
-	 * @var \PHPixie\ORM\Model
-	 * @access protected
+	 * @var string
 	 */
 	protected $model;
 	
 	/**
 	 * Logged in user
-	 * @var ORM
-	 * @access public
+	 * @var \PHPixie\ORM\Model
 	 */
-	public $user;
+	protected $user;
 	
 	/**
 	 * Name of the login provider that
-	 * the user logged in with.
+	 * the user logged in with
 	 * @var string
-	 * @access public
 	 */
 	public $logged_with;
 	
 	/**
-	 * Login providers array.
+	 * Login providers array
 	 * @var array
-	 * @access public
 	 */
 	protected $login_providers = array();
 	
 	/**
 	 * User role driver
-	 * @var \PHPixie\Auth\Role
-	 * @access public
+	 * @var \PHPixie\Auth\Role\Driver
 	 */
 	protected $role_driver;
 	
 	/**
-	 * Array of initialized \PHPixie\Auth\Service instances.
+	 * Array of initialized \PHPixie\Auth\Service instances
 	 * @var array
-	 * @access public
 	 */
 	protected $_services;
 	
 	/**
-	 * Constructs an Auth instance for the specified configuration.
+	 * Constructs an Auth instance for the specified configuration
 	 * 
-	 * @param string $config Name of the configuration.
+	 * @param \PHPixie\Pixie $pixie Pixie dependency container
 	 * @return void
-	 * @access public
 	 */
 	public function __construct($pixie) {
 		$this->pixie = $pixie;
@@ -88,11 +94,11 @@ class Auth {
 	}
 
 	/**
-	 * Gets an instance of an auth service
+	 * Gets an instance of a configured service
 	 *
-	 * @param string  $config Configuration name of the connection.
+	 * @param string  $config Configuration name of the service.
 	 *                        Defaults to  'default'.
-	 * @return \PHPixie\Auth\Service  Driver implementation of the Connection class.
+	 * @return \PHPixie\Auth\Service  Driver implementation of the Connection class
 	 */
 	public function service($config = "default") {
 		if (!isset($this->_services[$config]))
@@ -100,16 +106,37 @@ class Auth {
 		
 		return $this->_services[$config];
 	}
-	
+
+	/**
+	 * Builds a service
+	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return \PHPixie\Auth\Service  Auth Service
+	 */
 	public function build_service($config) {
 		return new \PHPixie\Auth\Service($this->pixie, $config);
 	}
 	
+	/**
+	 * Builds a login provider
+	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return \PHPixie\Auth\Login\Provider  Login Provider
+	 */
 	public function build_login($provider, $service, $config) {
 		$login_class = '\PHPixie\Auth\Login\\'.$provider;
 		return new $login_class($this->pixie, $service, $config);
 	}
 	
+	/**
+	 * Builds a role driver
+	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return \PHPixie\Auth\Role\Driver  Role Driver
+	 */
 	public function build_role($driver, $config) {
 		$role_class = '\PHPixie\Auth\Role\\'.$driver;
 		return new $role_class($this->pixie, $config);
@@ -118,11 +145,12 @@ class Auth {
 	/**
 	 * Sets the logged in user.
 	 * 
-	 * @param ORM $user logged in user
+	 * @param \PHPixie\ORM\Model $user logged in user
 	 * @param strong $logged_with Name of the provider that
-	 *                            performed the login.
+	 *                            performed the login
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
 	 * @return void
-	 * @access public
 	 */
 	public function set_user($user, $logged_with, $config = 'default') {
 		$this->service($config)->set_user($user, $logged_with);
@@ -131,20 +159,21 @@ class Auth {
 	/**
 	 * Logs the user out.
 	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
 	 * @return void
-	 * @access public
 	 */
 	public function logout($config = 'default') {
 		$this->service($config)->logout();
 	}
 	
 	/**
-	 * Checks if the logged in user has the specified role.
+	 * Checks if the logged in user has the specified role
 	 *
-	 * @param string $role Role to check for.
+	 * @param string $role Role to check for
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
 	 * @return bool If the user has the specified role
-	 * @throws Exception If the role driver is not specified
-	 * @access public
 	 */
 	public function has_role($role, $config = 'default') {
 		return $this->service($config)->has_role($role);
@@ -152,20 +181,35 @@ class Auth {
 	}
 	
 	/**
-	 * Returns the login provider by name.
+	 * Returns the login provider by name
 	 *
 	 * @param string $provider Name of the login provider
-	 * @return Login_Auth Login provider
-	 * @access public
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return \PHPixie\Auth\Login\Provider Login provider
 	 */
 	public function provider($provider, $config = 'default') {
 		return $this->service($config)->provider($provider);
 	}
 	
+	/**
+	 * Returns the logged in user
+	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return \PHPixie\ORM\Model Logged in user
+	 */
 	public function user($config = 'default') {
 		return $this->service($config)->user();
 	}
 	
+	/**
+	 * Returns the name of the provider that the user is logged with
+	 *
+	 * @param string  $config Configuration name of the service.
+	 *                        Defaults to  'default'.
+	 * @return string Name of the provider
+	 */
 	public function logged_with($config = 'default') {
 		return $this->service($config)->logged_with();
 	}
