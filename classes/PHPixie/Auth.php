@@ -146,7 +146,7 @@ class Auth {
 	 * Sets the logged in user.
 	 * 
 	 * @param \PHPixie\ORM\Model $user logged in user
-	 * @param strong $logged_with Name of the provider that
+	 * @param string $logged_with Name of the provider that
 	 *                            performed the login
 	 * @param string  $config Configuration name of the service.
 	 *                        Defaults to  'default'.
