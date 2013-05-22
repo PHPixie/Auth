@@ -59,7 +59,7 @@ class Relation extends Driver {
 					->where($this->name_field, $role)
 					->count_all() > 0;
 					
-		if ($this->type = 'belongs_to')
+		if ($this->type == 'belongs_to')
 			return $user->$relation->$field == $role;
 
 		throw new \Exception("The relationship must be either of has_many or has_one type");
