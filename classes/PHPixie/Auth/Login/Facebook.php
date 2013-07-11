@@ -62,7 +62,7 @@ class Facebook extends Provider {
 	 * Name of the login provider
 	 * @var string
 	 */
-	protected $name = 'facebook';
+	protected $name = 'Facebook';
 	
 	/**
 	 * Constructs password login provider for the specified configuration.
