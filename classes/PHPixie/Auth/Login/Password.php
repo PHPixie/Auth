@@ -32,7 +32,7 @@ class Password extends Provider {
 	 * Name of the login provider
 	 * @var string
 	 */
-	protected $name = 'password';
+	protected $name = 'Password';
 	
 	/**
 	 * Constructs password login provider for the specified configuration.
