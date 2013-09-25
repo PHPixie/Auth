@@ -160,7 +160,7 @@ abstract class Facebook extends \PHPixie\Controller {
 			$this->response-> body = $view->render();
 		}else {
 			if ($return_url == null)
-				$return_url = '/';
+				$return_url = $this->pixie->basepath;
 			$this->response->redirect($return_url);
 		}
 	}
