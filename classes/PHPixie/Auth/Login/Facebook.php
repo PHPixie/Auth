@@ -140,6 +140,19 @@ class Facebook extends Provider {
 	}
 	
 	/**
+	 * Gets facebook logout URL
+	 * 
+	 * @param string $redirect_url URL to redirect the user to after the logout
+	 * @return string Facebook logout URL
+	 * @throw \Exception If the user is not logged in
+	 */
+	public function logout_url($redirect_url) {
+		if ($this->access_token == null)
+			throw new \Exception("User is not logged in with Facebook");
+		return 'https://facebook.com/logout.php?access_token='.$this->access_token.'&next='.urlencode($redirect_url);
+	}
+	
+	/**
 	 * Checks if the user is logged in with facebook, if so
 	 * notifies the associated Service instance about it.
 	 * 

@@ -116,14 +116,31 @@ namespace {
 				."&scope=user_about_me",$this->object->login_url(1,2,3));
 		}
 		
-		public function exchange_code() {
+		public function test_exchange_code() {
 			$data = $this->object->exchange_code(1,2);
 			$this->assertEquals('test2',$data['test']);
 		}
 		
-		public function request() {
+		public function test_request() {
 			$object = new \PHPixie\Auth\Login\Facebook($this->pixie, $this->pixie->auth->service(), 'default');
 			$object->request('https://graph.facebook.com/');
+		}
+		
+		public function test_logout_url() {
+			$this->object->set_user($this->pixie-> orm->get('fairy')->find(), 123);
+			$redirect_url = 'http://google.com/';
+			$url = $this->object->logout_url($redirect_url);
+			$this->assertEquals('https://facebook.com/logout.php?access_token=123&next='.urlencode($redirect_url),$url);
+		}
+		
+		public function test_logout_url_exception() {
+			$except = false;
+			try{
+				$url = $this->object->logout_url('http://google.com/');
+			}catch (\Exception $e) {
+				$except = true;
+			}
+			$this->assertEquals(true, $except);
 		}
 	
 	}
