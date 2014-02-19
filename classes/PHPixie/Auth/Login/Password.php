@@ -63,7 +63,9 @@ class Password extends Provider {
 			$password_field = $this->password_field;
 			$challenge = $user->$password_field;
 			
-			if($this->hash_method){
+			if($this->hash_method && 'crypt'==$this->hash_method) {
+				$password = crypt($password, $challenge);
+			} elseif($this->hash_method) {
 				$salted = explode(':', $challenge);
 				$password = hash($this->hash_method, $password.$salted[1]);
 				$challenge = $salted[0];
@@ -85,6 +87,8 @@ class Password extends Provider {
 	public function hash_password($password){
 		if(!$this->hash_method)
 			return $password;
+		if('crypt'==$this->hash_method)
+			return crypt($password);
 		$salt = uniqid(rand());
 		return hash($this->hash_method, $password.$salt).':'.$salt;
 	}	
