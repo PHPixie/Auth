@@ -26,7 +26,8 @@ Add a config file under */assets/config/auth.php*
 	                'password_field' => 'password',
 	                'remember_me_field' => 'remember_me',
 					'remember_me_lifetime' => 63072000,	//60s * 60min * 24h * 365d * 2y
-					'secret_key' => 'rqgF6cwqLrwmWfxDquC7'	//Secret key used to hash the remember_me cookie
+					'secret_key' => 'rqgF6cwqLrwmWfxDquC7',	//Secret key used to hash the remember_me cookie
+					'allow_multiple_login' => true	//User can login with different browsers/computers at the same time
 	            ),
 	            'facebook' => array(
 	                //Facebook App ID and Secret
