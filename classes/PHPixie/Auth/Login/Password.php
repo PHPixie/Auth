@@ -54,6 +54,12 @@ class Password extends Provider {
 	protected $secret_key = 'change_me_in_the_config_auth_file';
 
 	/**
+	 * Allow multiple login from multiple browsers/computers for a same user
+	 * @var string
+	 */
+	protected $allow_multiple_login = false;
+
+	/**
 	 * Constructs password login provider for the specified configuration.
 	 *
 	 * @param \PHPixie\Pixie $pixie Pixie dependency container
@@ -68,6 +74,7 @@ class Password extends Provider {
 		$this->remember_me_lifetime = $pixie->config->get($this->config_prefix."remember_me_lifetime");
 		$this->secret_key = $pixie->config->get($this->config_prefix."secret_key");
 		$this->hash_method = $pixie->config->get($this->config_prefix."hash_method",'md5');
+		$this->allow_multiple_login = $pixie->config->get($this->config_prefix."allow_multiple_login");
 
 		//Auto-login user if remembered
 		if (!$this->check_login() && $pixie->cookie->get('remember_me')) {
@@ -106,7 +113,12 @@ class Password extends Provider {
 
 				if ($remember_me) {
 					//Generate a token and save it for the user in db
-					$token = md5(uniqid(rand(), true));
+					if ($this->allow_multiple_login) {
+						$token = sha1($user->password);
+					}
+					else {
+						$token = md5(uniqid(rand(), true));
+					}
 					$remember_me_field = $this->remember_me_field;
 					$user->$remember_me_field = $token;
 					$user->save();
