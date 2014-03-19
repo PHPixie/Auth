@@ -14,7 +14,7 @@ To use this module:
 * Add 'auth' to modules array in /application/config/core.php
 * Read about how to use it here [http://phpixie.com/modules/auth-module/](http://phpixie.com/modules/auth-module/)
 
-Add a config file under */assets/config.auth.php*
+Add a config file under */assets/config/auth.php*
 
 	return array(
 	    'default' => array(
