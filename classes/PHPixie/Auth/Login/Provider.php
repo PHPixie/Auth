@@ -63,16 +63,6 @@ abstract class Provider {
 	 */
 	public function logout() {
 		$this->pixie->session->remove($this->user_id_key);
-		if ($this->pixie->cookie->get('remember_me')) {
-			//Cannot use PHPixie's cookie removal because it doesn't fire immediately
-			//This causes a problem if just after logout(), there is a redirect() that doesn't
-			//	remove correctly the PHPixie cookies
-			//$this->pixie->cookie->remove('remember_me');
-
-			//Using PHP native removal instead
-			unset($_COOKIE['remember_me']);
-			setcookie('remember_me', null, -1, '/');
-		}
 	}
 
 	/**

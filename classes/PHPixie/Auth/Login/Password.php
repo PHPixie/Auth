@@ -23,10 +23,10 @@ class Password extends Provider {
 
 	/**
 	 * Field in the users table where the users
-	 * remember_me token is stored.
+	 * persistant login token is stored.
 	 * @var string
 	 */
-	protected $remember_me_field;
+	protected $login_token_field;
 
 	/**
 	 * Hash algorithm to use. If not set
@@ -42,20 +42,14 @@ class Password extends Provider {
 	protected $name = 'password';
 
 	/**
-	 * Lifetime of the remember_me cookie
-	 * @var string
+	 * Lifetime of the login token cookie
+	 * @var integer
 	 */
-	protected $remember_me_lifetime = 604800;	//Default time = a week
-
-	/**
-	 * Secret key used for remember_me cookie
-	 * @var string
-	 */
-	protected $secret_key = 'change_me_in_the_config_auth_file';
+	protected $login_token_lifetime;
 
 	/**
 	 * Allow multiple login from multiple browsers/computers for a same user
-	 * @var string
+	 * @var bool
 	 */
 	protected $allow_multiple_login = false;
 
@@ -69,27 +63,43 @@ class Password extends Provider {
 	public function __construct($pixie, $service, $config) {
 		parent::__construct($pixie, $service, $config);
 		$this->login_field = $pixie->config->get($this->config_prefix."login_field");
-		$this->password_field = $pixie->config->get($this->config_prefix."password_field");
-		$this->remember_me_field = $pixie->config->get($this->config_prefix."remember_me_field");
-		$this->remember_me_lifetime = $pixie->config->get($this->config_prefix."remember_me_lifetime");
-		$this->secret_key = $pixie->config->get($this->config_prefix."secret_key");
-		$this->hash_method = $pixie->config->get($this->config_prefix."hash_method",'md5');
-		$this->allow_multiple_login = $pixie->config->get($this->config_prefix."allow_multiple_login");
-
-		//Auto-login user if remembered
-		if (!$this->check_login() && $pixie->cookie->get('remember_me')) {
-			$this->login_remembered_me();
+		$this->password_field = $pixie-> config->get($this->config_prefix."password_field");
+		$this->hash_method = $pixie-> config->get($this->config_prefix."hash_method", 'md5');
+		
+		
+		$this->login_token_field = $pixie->config->get($this->config_prefix."login_token_field", null);
+		if ($this->login_token_field) {
+			$this->login_token_lifetime = $pixie->config->get($this->config_prefix."login_token_lifetime", 604800);
 		}
 	}
 
+	/**
+	 * Checks if the user is logged in.
+	 *
+	 * @see PHPixie\Auth\Login\Provider::check_login()
+	 * @return bool If the user is logged in
+	 */
+	public function check_login() {
+		if (parent::check_login())
+			return true;
+			
+		$token = $this->pixie->cookie->get('login_token', null);
+		if ($token === null)
+			return false;
+			
+		return $this->login_token($token);
+	}
+	
 	/**
 	 * Attempts to log the user in using his login and password
 	 *
 	 * @param string $login Users login
 	 * @param string $password Users password
+	 * @param bool   $persist_login Whether to persist users login.
+	 *                              Defalts to false.
 	 * @return bool If the user exists.
 	 */
-	public function login($login, $password, $remember_me = false) {
+	public function login($login, $password, $persist_login = false) {
 		$user = $this->service->user_model()
 						->where($this->login_field, $login)
 						->find();
@@ -111,23 +121,17 @@ class Password extends Provider {
 			if ($challenge === $password) {
 				$this->set_user($user);
 
-				if ($remember_me) {
-					//Generate a token and save it for the user in db
-					if ($this->allow_multiple_login) {
-						$token = sha1($user->password);
-					}
-					else {
-						$token = md5(uniqid(rand(), true));
-					}
-					$remember_me_field = $this->remember_me_field;
-					$user->$remember_me_field = $token;
-					$user->save();
-
-					//Put the login info
-					$cookie = $login . ':' . $token;
-				    $mac = hash_hmac('sha256', $cookie, $this->secret_key);
-				    $cookie .= ':' . $mac;
-				    $this->pixie->cookie->set('remember_me', $cookie, $this->remember_me_lifetime, '/', null, null, false);
+				if ($persist_login) {
+					$token_field = $this->login_token_field;
+					if (empty($token_field))
+						throw new \Exception("Option 'login_token_field' not set");
+					
+					$token = $this->get_valid_token($user);
+					
+					$salt = $this->random_string();
+					$user_token = crypt($token, '$2y$10$'.$salt);
+					$cookie = $login . ':' . $user_token;
+				    $this->pixie->cookie->set('login_token', $cookie, $this->login_token_lifetime, '/', null, null, false);
 				}
 
 				return true;
@@ -135,73 +139,75 @@ class Password extends Provider {
 		}
 		return false;
 	}
-
+	
 	/**
-	 * Login a remembered user
+	 * Regenerates users login token
 	 *
+	 * @param \PHPixie\ORM\Model $user User model to update
+	 * @return string Generated token
+	 */
+	public function regenerate_login_token($user) {
+		$token_field = $this->login_token_field;
+		$token = $this->random_string().':'.time();
+		$user->$token_field = $token;
+		$user->save();
+		return $token;
+	}
+	
+	/**
+	 * Checks if the current generated token is still valid
+	 *
+	 * @param \PHPixie\ORM\Model $user User model to check
+	 * @return string Valid token
+	 */
+	public function get_valid_token($user) {
+		$token_field = $this->login_token_field;
+		$token = $user->$token_field;
+		$split_token = explode(':', $token);
+		
+		if (count($split_token) !==2 || $split_token[1] < time() - $this->login_token_lifetime)
+			$split_token = explode(':', $this->regenerate_login_token($user));
+		return $split_token[0];
+	}
+	
+	/**
+	 * Login user by token
+	 *
+	 * @param bool $token Token to verify the user against
 	 * @return bool If the user exists.
 	 */
-	public function login_remembered_me()
+	public function login_token($user_token)
 	{
-		$cookie = $this->pixie->cookie->get('remember_me') ? : '';
-	    if ($cookie) {
-	        list ($login, $token, $mac) = explode(':', $cookie);
-	        if ($mac !== hash_hmac('sha256', $login . ':' . $token, $this->secret_key)) {
-	            return false;
-	        }
-	    }
+		$user_token = explode(':', $user_token, 2);
+		if (count($user_token) !== 2)
+			return false;
+		
+		$login = $user_token[0];
 		$user = $this->service->user_model()
 						->where($this->login_field, $login)
 						->find();
-		if ($user->loaded()) {
-			$remember_me_field = $this->remember_me_field;
-	        $token_from_db = $user->$remember_me_field;
-	        if ($this->timing_safe_compare($token_from_db, $token)) {
-	            $this->set_user($user);
-	            return true;
-	        }
+						
+		if (!$user->loaded())
+			return false;
+		
+        $db_token = $this->get_valid_token($user);
+		if ($user_token[1] === crypt($db_token, $user_token[1])) {
+			$this->service->set_user($user, $this->name);
+			return true;
 		}
 		return false;
 	}
 
 	/**
-	 * A timing safe equals comparison
+	 * Logs the user out
 	 *
-	 * Picked from http://stackoverflow.com/a/17266448/836501
-	 * Also see http://blog.astrumfutura.com/2010/10/nanosecond-scale-remote-timing-attacks-on-php-applications-time-to-take-them-seriously/
-	 *
-	 * To prevent leaking length information, it is important
-	 * that user input is always used as the second parameter.
-	 *
-	 * @param string $safe The internal (safe) value to be checked
-	 * @param string $user The user submitted (unsafe) value
-	 *
-	 * @return bool True if the two strings are identical.
 	 */
-	private function timing_safe_compare($safe, $user) {
-	    // Prevent issues if string length is 0
-	    $safe .= chr(0);
-	    $user .= chr(0);
-
-	    $safeLen = strlen($safe);
-	    $userLen = strlen($user);
-
-	    // Set the result to the difference between the lengths
-	    $result = $safeLen - $userLen;
-
-	    // Note that we ALWAYS iterate over the user-supplied length
-	    // This is to prevent leaking length information
-	    for ($i = 0; $i < $userLen; $i++) {
-	        // Using % here is a trick to prevent notices
-	        // It's safe, since if the lengths are different
-	        // $result is already non-0
-	        $result |= (ord($safe[$i % $safeLen]) ^ ord($user[$i]));
-	    }
-
-	    // They are only identical strings if $result is exactly 0...
-	    return $result === 0;
+	public function logout() {
+		if ($this->pixie->cookie->get('login_token', null))
+			$this->pixie->cookie->remove('login_token');
+		return parent::logout();	
 	}
-
+	
 	/**
 	 * Hashes the password using the configured method
 	 *
@@ -214,11 +220,20 @@ class Password extends Provider {
 		if('crypt'==$this->hash_method) {
 			if (function_exists('password_hash')) // PHP 5.5.0+
 				return password_hash($password, PASSWORD_DEFAULT);
-			$salt = str_replace(array('+', '='), array('.', ''),
-			        base64_encode(pack('N9', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand())));
+			$salt = $this->random_string();
 			return crypt($password, '$2y$10$'.$salt);
 		}
 		$salt = uniqid(rand());
 		return hash($this->hash_method, $password.$salt).':'.$salt;
+	}
+	
+	/**
+	 * Generates random string
+	 *
+	 * @return string Random string
+	 */
+	public function random_string() {
+		return str_replace(array('+', '='), array('.', ''),
+			        base64_encode(pack('N9', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand())));
 	}
 }
