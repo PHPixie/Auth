@@ -22,6 +22,13 @@ class Password extends Provider {
 	protected $password_field;
 
 	/**
+	 * Field in the users table where the users
+	 * remember_me token is stored.
+	 * @var string
+	 */
+	protected $remember_me_field;
+
+	/**
 	 * Hash algorithm to use. If not set
 	 * the passwords are saved without hashing.
 	 * @var string
@@ -35,6 +42,24 @@ class Password extends Provider {
 	protected $name = 'password';
 
 	/**
+	 * Lifetime of the remember_me cookie
+	 * @var string
+	 */
+	protected $remember_me_lifetime = 604800;	//Default time = a week
+
+	/**
+	 * Secret key used for remember_me cookie
+	 * @var string
+	 */
+	protected $secret_key = 'change_me_in_the_config_auth_file';
+
+	/**
+	 * Allow multiple login from multiple browsers/computers for a same user
+	 * @var string
+	 */
+	protected $allow_multiple_login = false;
+
+	/**
 	 * Constructs password login provider for the specified configuration.
 	 *
 	 * @param \PHPixie\Pixie $pixie Pixie dependency container
@@ -45,7 +70,16 @@ class Password extends Provider {
 		parent::__construct($pixie, $service, $config);
 		$this->login_field = $pixie->config->get($this->config_prefix."login_field");
 		$this->password_field = $pixie->config->get($this->config_prefix."password_field");
+		$this->remember_me_field = $pixie->config->get($this->config_prefix."remember_me_field");
+		$this->remember_me_lifetime = $pixie->config->get($this->config_prefix."remember_me_lifetime");
+		$this->secret_key = $pixie->config->get($this->config_prefix."secret_key");
 		$this->hash_method = $pixie->config->get($this->config_prefix."hash_method",'md5');
+		$this->allow_multiple_login = $pixie->config->get($this->config_prefix."allow_multiple_login");
+
+		//Auto-login user if remembered
+		if (!$this->check_login() && $pixie->cookie->get('remember_me')) {
+			$this->login_remembered_me();
+		}
 	}
 
 	/**
@@ -55,7 +89,7 @@ class Password extends Provider {
 	 * @param string $password Users password
 	 * @return bool If the user exists.
 	 */
-	public function login($login, $password) {
+	public function login($login, $password, $remember_me = false) {
 		$user = $this->service->user_model()
 						->where($this->login_field, $login)
 						->find();
@@ -76,10 +110,96 @@ class Password extends Provider {
 			}
 			if ($challenge === $password) {
 				$this->set_user($user);
+
+				if ($remember_me) {
+					//Generate a token and save it for the user in db
+					if ($this->allow_multiple_login) {
+						$token = sha1($user->password);
+					}
+					else {
+						$token = md5(uniqid(rand(), true));
+					}
+					$remember_me_field = $this->remember_me_field;
+					$user->$remember_me_field = $token;
+					$user->save();
+
+					//Put the login info
+					$cookie = $login . ':' . $token;
+				    $mac = hash_hmac('sha256', $cookie, $this->secret_key);
+				    $cookie .= ':' . $mac;
+				    $this->pixie->cookie->set('remember_me', $cookie, $this->remember_me_lifetime, '/', null, null, false);
+				}
+
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Login a remembered user
+	 *
+	 * @return bool If the user exists.
+	 */
+	public function login_remembered_me()
+	{
+		$cookie = $this->pixie->cookie->get('remember_me') ? : '';
+	    if ($cookie) {
+	        list ($login, $token, $mac) = explode(':', $cookie);
+	        if ($mac !== hash_hmac('sha256', $login . ':' . $token, $this->secret_key)) {
+	            return false;
+	        }
+	    }
+		$user = $this->service->user_model()
+						->where($this->login_field, $login)
+						->find();
+		if ($user->loaded()) {
+			$remember_me_field = $this->remember_me_field;
+	        $token_from_db = $user->$remember_me_field;
+	        if ($this->timing_safe_compare($token_from_db, $token)) {
+	            $this->set_user($user);
+	            return true;
+	        }
+		}
+		return false;
+	}
+
+	/**
+	 * A timing safe equals comparison
+	 *
+	 * Picked from http://stackoverflow.com/a/17266448/836501
+	 * Also see http://blog.astrumfutura.com/2010/10/nanosecond-scale-remote-timing-attacks-on-php-applications-time-to-take-them-seriously/
+	 *
+	 * To prevent leaking length information, it is important
+	 * that user input is always used as the second parameter.
+	 *
+	 * @param string $safe The internal (safe) value to be checked
+	 * @param string $user The user submitted (unsafe) value
+	 *
+	 * @return bool True if the two strings are identical.
+	 */
+	private function timing_safe_compare($safe, $user) {
+	    // Prevent issues if string length is 0
+	    $safe .= chr(0);
+	    $user .= chr(0);
+
+	    $safeLen = strlen($safe);
+	    $userLen = strlen($user);
+
+	    // Set the result to the difference between the lengths
+	    $result = $safeLen - $userLen;
+
+	    // Note that we ALWAYS iterate over the user-supplied length
+	    // This is to prevent leaking length information
+	    for ($i = 0; $i < $userLen; $i++) {
+	        // Using % here is a trick to prevent notices
+	        // It's safe, since if the lengths are different
+	        // $result is already non-0
+	        $result |= (ord($safe[$i % $safeLen]) ^ ord($user[$i]));
+	    }
+
+	    // They are only identical strings if $result is exactly 0...
+	    return $result === 0;
 	}
 
 	/**
