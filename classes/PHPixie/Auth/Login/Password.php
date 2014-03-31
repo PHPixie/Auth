@@ -122,6 +122,8 @@ class Password extends Provider {
 				$this->set_user($user);
 
 				if ($persist_login) {
+					if ($this->pixie->cookie->get('login_token', null))
+						$this->pixie->cookie->remove('login_token');
 					$token_field = $this->login_token_field;
 					if (empty($token_field))
 						throw new \Exception("Option 'login_token_field' not set");
