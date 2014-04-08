@@ -132,7 +132,7 @@ class Password extends Provider {
 					$salt = $this->random_string();
 					$user_token = crypt($token, '$2y$10$'.$salt);
 					$cookie = $login . ':' . $user_token;
-				    $this->pixie->cookie->set('login_token', $cookie, $this->login_token_lifetime, '/', null, null, false);
+				    $this->pixie->cookie->set('login_token', $cookie, $this->login_token_lifetime);
 				}
 
 				return true;
