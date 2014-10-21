@@ -165,4 +165,38 @@ class Service {
 		return $this->pixie->orm->get($this->model);
 	}
 
+	/**
+	 * Returns user data from file, or saves user data to file
+	 *
+	 * @param string $login
+	 * @param bool|\stdClass $userToSave
+	 *
+	 * @return bool|\stdClass User data object
+	 */
+	public function user_file($login, $userToSave = false)
+	{
+		if(!$userToSave)
+		{
+			$user = new \stdClass();
+			$user->exists = 1;
+			try{
+				$user_data = $this->pixie->config->get('users.users.'.$login);
+				$user->password = $user_data['password'];
+				$user->token = $user_data['token'];
+				$user->role = $user_data['role'];
+			}catch (\Exception $e){
+				$user->exists = 0;
+			}
+			$user->login = $login;
+
+			return $user;
+		}else{
+			$this->pixie->config->set('users.'.$userToSave->login.'.password', $userToSave->password);
+			$this->pixie->config->set('users.'.$userToSave->login.'.token', $userToSave->token);
+			$this->pixie->config->set('users.'.$userToSave->login.'.role', $userToSave->role);
+
+			return $userToSave;
+		}
+	}
+
 }
