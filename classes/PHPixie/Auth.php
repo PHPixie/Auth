@@ -215,7 +215,11 @@ class Auth {
 	}
     
     public function repository($name, $service, $config_prefix) {
-        $class = '\PHPixie\Auth\Repository\\'.$name;
+        if(substr($name, 0, 1) === "\\") {
+            $class = $name;
+        }else{
+            $class = '\PHPixie\Auth\Repository\\'.$name;
+        }
         return new $class($this->pixie, $service, $config_prefix);
     }
 	
