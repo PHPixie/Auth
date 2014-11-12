@@ -213,5 +213,10 @@ class Auth {
 	public function logged_with($config = 'default') {
 		return $this->service($config)->logged_with();
 	}
+    
+    public function repository($name, $service, $config_prefix) {
+        $class = '\PHPixie\Auth\Repository\\'.$name;
+        return new $class($this->pixie, $service, $config_prefix);
+    }
 	
 }

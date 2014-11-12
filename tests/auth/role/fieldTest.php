@@ -35,7 +35,7 @@ namespace {
 			$this->pixie->auth = new \PHPixie\Auth($pixie);
 			
 			$pixie->config->set('db.default.connection', 'sqlite:'.$this->db_file);
-			$pixie->config->set('db.default.driver', 'pdo');
+			$pixie->config->set('db.default.driver', 'PDO');
 			$pixie->config->set('auth.default.login.password.login_field', 'name');
 			$pixie->config->set('auth.default.login.password.password_field', 'password');
 			$pixie->config->set('auth.default.login.password.hash_method', 'md5');

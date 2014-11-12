@@ -35,7 +35,7 @@ namespace {
 			$this->pixie->auth = new \PHPixie\Auth($pixie);
 			
 			$pixie->config->set('db.default.connection', 'sqlite:'.$this->db_file);
-			$pixie->config->set('db.default.driver', 'pdo');
+			$pixie->config->set('db.default.driver', 'PDO');
 			$pixie->config->set('auth.default.model', 'Fairy');
 			$pixie->config->set('auth.default.login.facebook.app_id', '111');
 			$pixie->config->set('auth.default.login.facebook.app_secret', '222');

@@ -9,13 +9,6 @@ class Password extends Provider {
 
 	/**
 	 * Field in the users table where the users
-	 * login is stored.
-	 * @var string
-	 */
-	protected $login_field;
-
-	/**
-	 * Field in the users table where the users
 	 * password is stored.
 	 * @var string
 	 */
@@ -52,6 +45,13 @@ class Password extends Provider {
 	 * @var bool
 	 */
 	protected $allow_multiple_login = false;
+    
+    /**
+	 * User repository
+	 * @var \PHPixie\Auth\Login\Password\Repository
+	 */
+    protected $repository;
+    
 
 	/**
 	 * Constructs password login provider for the specified configuration.
@@ -62,10 +62,11 @@ class Password extends Provider {
 	 */
 	public function __construct($pixie, $service, $config) {
 		parent::__construct($pixie, $service, $config);
-		$this->login_field = $pixie->config->get($this->config_prefix."login_field");
-		$this->password_field = $pixie-> config->get($this->config_prefix."password_field");
-		$this->hash_method = $pixie-> config->get($this->config_prefix."hash_method", 'md5');
+		$this->password_field = $pixie->config->get($this->config_prefix."password_field");
+		$this->hash_method = $pixie->config->get($this->config_prefix."hash_method", 'md5');
 		
+        $repository = $pixie->config->get($this->config_prefix."repository", 'ORM');
+        $this->repository = $pixie->auth->repository($repository, $this->service, $this->config_prefix);
 		
 		$this->login_token_field = $pixie->config->get($this->config_prefix."login_token_field", null);
 		if ($this->login_token_field) {
@@ -100,45 +101,56 @@ class Password extends Provider {
 	 * @return bool If the user exists.
 	 */
 	public function login($login, $password, $persist_login = false) {
-		$user = $this->service->user_model()
-						->where($this->login_field, $login)
-						->find();
-		if($user->loaded()){
-			$password_field = $this->password_field;
+		$user = $this->repository->get_by_login($login);
+        
+        if($user === null)
+            return false;
+        
+        
+        if($user instanceof \PHPixie\Auth\Login\Password\User){
+            $challenge = $user->password_hash();
+            
+        }elseif($user instanceof \PHPixie\ORM\Model && $user->loaded()){
+            $password_field = $this->password_field;
 			$challenge = $user->$password_field;
+            
+        }else{
+            return false;
+        }
+    
+        if($this->hash_method && 'crypt'==$this->hash_method) {
+            if (function_exists('password_verify')) { // PHP 5.5.0+
+                $password = password_verify($password, $challenge)?$challenge:false;
+            } else {
+                $password = crypt($password, $challenge);
+            }
+        } elseif($this->hash_method) {
+            $salted = explode(':', $challenge);
+            $password = hash($this->hash_method, $password.$salted[1]);
+            $challenge = $salted[0];
+        }
+        if ($challenge === $password) {
+            $this->set_user($user);
+            if ($this->pixie->cookie->get('login_token', null))
+                $this->pixie->cookie->remove('login_token');
+            if ($persist_login) {
+                $token_field = $this->login_token_field;
+                if (empty($token_field))
+                    throw new \Exception("Option 'login_token_field' not set");
 
-			if($this->hash_method && 'crypt'==$this->hash_method) {
-				if (function_exists('password_verify')) { // PHP 5.5.0+
-					$password = password_verify($password, $challenge)?$challenge:false;
-				} else {
-					$password = crypt($password, $challenge);
-				}
-			} elseif($this->hash_method) {
-				$salted = explode(':', $challenge);
-				$password = hash($this->hash_method, $password.$salted[1]);
-				$challenge = $salted[0];
-			}
-			if ($challenge === $password) {
-				$this->set_user($user);
-				if ($this->pixie->cookie->get('login_token', null))
-					$this->pixie->cookie->remove('login_token');
-				if ($persist_login) {
-					$token_field = $this->login_token_field;
-					if (empty($token_field))
-						throw new \Exception("Option 'login_token_field' not set");
-					
-					$token = $this->get_valid_token($user);
-					
-					$salt = $this->random_string();
-					$user_token = crypt($token, '$2y$10$'.$salt);
-					$cookie = $login . ':' . $user_token;
-				    $this->pixie->cookie->set('login_token', $cookie, $this->login_token_lifetime);
-				}
+                $token = $this->get_valid_token($user);
 
-				return true;
-			}
-		}
-		return false;
+                $salt = $this->random_string();
+                $user_token = crypt($token, '$2y$10$'.$salt);
+                $cookie = $login . ':' . $user_token;
+                $this->pixie->cookie->set('login_token', $cookie, $this->login_token_lifetime);
+            }
+
+            return true;
+        }
+        
+        return false;
+		
 	}
 	
 	/**
@@ -148,10 +160,8 @@ class Password extends Provider {
 	 * @return string Generated token
 	 */
 	public function regenerate_login_token($user) {
-		$token_field = $this->login_token_field;
 		$token = $this->random_string().':'.time();
-		$user->$token_field = $token;
-		$user->save();
+        $this->repository->save_login_token($user, $token);
 		return $token;
 	}
 	
@@ -162,8 +172,15 @@ class Password extends Provider {
 	 * @return string Valid token
 	 */
 	public function get_valid_token($user) {
-		$token_field = $this->login_token_field;
-		$token = $user->$token_field;
+        if($user instanceof \PHPixie\Auth\Login\Password\User)
+        {
+            $token = $user->login_token();
+            
+        }else{
+            $token_field = $this->login_token_field;
+            $token = $user->$token_field;
+        }
+        
 		$split_token = explode(':', $token);
 		
 		if (count($split_token) !==2 || $split_token[1] < time() - $this->login_token_lifetime)
@@ -184,11 +201,9 @@ class Password extends Provider {
 			return false;
 		
 		$login = $user_token[0];
-		$user = $this->service->user_model()
-						->where($this->login_field, $login)
-						->find();
-						
-		if (!$user->loaded())
+		$user = $this->repository->get_by_login($login);
+        
+        if($user === null || ($user instanceof \PHPixie\ORM\Model && !$user->loaded()))
 			return false;
 		
         $db_token = $this->get_valid_token($user);
