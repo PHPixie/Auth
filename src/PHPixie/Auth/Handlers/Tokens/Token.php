@@ -1,18 +1,18 @@
 <?php
 
-namespace PHPixie\Auth;
+namespace PHPixie\Auth\Persistance;
 
 class Token
 {
     protected $userId;
     protected $series;
-    protected $passphrase;
+    protected $challenge;
     
-    public function __construct($userId, $series, $passphrase)
+    public function __construct($userId, $series, $challenge)
     {
         $this->userId     = $userId;
         $this->series     = $series;
-        $this->passphrase = $passphrase;
+        $this->challenge  = $challenge;
     }
     
     public function userId()
@@ -25,10 +25,8 @@ class Token
         return $this->series;
     }
     
-    public function passphrase()
+    public function challenge()
     {
-        return $this->passphrase;
+        return $this->challenge;
     }
-    
-    public function setPassphrase($passphrase, $challenge);
 }
