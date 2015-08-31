@@ -1,22 +1,31 @@
 <?php
 
-namespace PHPixie\Auth\Persistance;
+namespace PHPixie\Auth\Tokens;
 
 class Handler
 {
     protected $random;
-    protected $tokenStorage;
+    protected $configData;
     
-    public function __construct($random, $tokenStorage)
+    protected $storage;
+    protected $seriesLength;
+    protected $passphraseLength;
+    
+    public function __construct($tokens, $random, $configData)
     {
-        $this->random       = $random;
-        $this->tokenStorage = $tokenStorage;
+        $this->random     = $random;
+        
+        $storageConfig = $this->configData->slice('storage');
+        $this->storage = $tokens->buildStorage($storageConfig);
+        
+        $this->seriesLength     = $configData->get('seriesLength',30);
+        $this->passphraseLength = $configData->get('passphraseLength',30);
     }
     
     public function create($user, $lifetime)
     {
-        $series     = $random->string(30);
-        $passphrase = $random->string(30);
+        $series     = $random->string($this->seriesLength);
+        $passphrase = $random->string($this->passphraseLength);
         $challenge  = $this->challenge($series, $passphrase);
         
         $token = $this->token(
@@ -50,14 +59,14 @@ class Handler
             return null;
         }
         
-        return $token->userId();
+        return $token;
     }
     
-    public function refresh($encodedToken, $lifetime)
+    public function refresh($token)
     {
         list($series, $passphrase) = $this->decodeToken($encodedToken);
         
-        $passphrase = $random->string(30);
+        $passphrase = $random->string($this->passphraseLength);
         $challenge  = $this->challenge($series, $passphrase);
         
         $token = $this->tokenStorage->update($series, $challenge, $this->expires($lifetime));
@@ -68,6 +77,15 @@ class Handler
     {
         list($series, $passphrase) = $this->decodeToken($encodedToken);
         $this->tokenStorage->removeSeries($series);
+    }
+    
+    protected function storage()
+    {
+        if($this->storage === null) {
+            
+        }
+        
+        return $this->storage;
     }
     
     protected function challenge($series, $passphrase)

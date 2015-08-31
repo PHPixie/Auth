@@ -4,33 +4,106 @@ namespace PHPixie\Auth;
 
 class Builder
 {
-    protected $configData;
-    protected $externalRepositoryRegistry;
+    protected $database;
+    protected $httpContextContainer;
+    protected $authContextContainer;
     
-    public function __construct($configData, $externalRepositoryRegistry = null)
-    {
-        $this->configData                 = $configData;
-        $this->externalRepositoryRegistry = $externalRepositoryRegistry;
-    }
+    protected $instances = array();
     
-    public function repositoryRegistry()
+    public function __construct(
+        $database,
+        $externalRepositories = null,
+        $httpContextContainer = null,
+        $authContextContainer = null
+    )
     {
-        return new Repositories\Registry\Builder(
-            $this->configData->slice('repositoories'),
-            $this->externalRepositoryRegistry
-        )
+        $this->database             = $database;
+        $this->repositoryRegistry   = $repositoryRegistry;
+        $this->httpContextContainer = $httpContextContainer;
+        $this->authContextContainer = $authContextContainer;
     }
     
     public function domains()
     {
+        return $this->instance('domains');
+    }
+    
+    public function handlers()
+    {
+        return $this->instance('handlers');
+    }
+    
+    public function providers()
+    {
+        return $this->instance('providers');
+    }
+    
+    public function repositories()
+    {
+        return $this->instance('repositories');
+    }
+    
+    public function contextContainer()
+    {
+        if($this->contextContainer === null) {
+            $this->contextContainer = $this->buildContextContainer();
+        }
+        
+        return $this->contextContainer;
+    }
+    
+    public function context()
+    {
+        return $this->contextContainer()->context();
+    }
+    
+    public function buildContext()
+    {
+        return new Context();
+    }
+    
+    public function buildContextContainer()
+    {
+        return new Context\Container\Implementation();
+    }
+    
+    protected function instance($name)
+    {
+        if(!array_key_exists($name, $this->instances)) {
+            $method = 'build'.ucfirst($name);
+            $this->instances[$name] = $this->$method();
+        }
+        
+        return $this->instances[$name];
+    }
+    
+    protected function buildDomains()
+    {
         return new Domains(
-            $this->configData->slice('domains'),
-            $this->repositoryRegistry()
+            $this,
+            $this->configData->slice('domains')
         );
     }
     
-    public function domain($configData)
+    protected function buildHandlers()
     {
-        return new Domains\Domain($this, $configData);
+        return new Handlers(
+            $this->database
+        );
+    }
+    
+    protected function buildProviders()
+    {
+        return new Providers(
+            $this->handlers(),
+            $this->httpContextContainer
+        );
+    }
+    
+    protected function buildRepositories()
+    {
+        return new Repositories(
+            $this->repositoryRegistry
+        );
     }
 }

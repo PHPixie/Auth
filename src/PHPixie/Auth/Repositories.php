@@ -4,11 +4,22 @@ namespace PHPixie\Auth;
 
 class Repositories
 {
-    protected $repositories;
+    protected $repositoryRegistry;
     
-    public function __construct($repository)
+    public function __construct($repositoryRegistry)
     {
-        $this->configData = $configData;
-        $this->repositories = $externalRepositories;
+        $this->repositoryRegistry = $repositoryRegistry;
+    }
+    
+    public function get($name)
+    {
+        if($this->repositoryRegistry !== null) {
+            $repository = $this->repositoryRegistry->get($name);
+            if($repository !== null) {
+                return $repository;
+            }
+        }
+        
+        throw new \PHPixie\Auth\Exception("Repository '$name' does not exist");
     }
 }

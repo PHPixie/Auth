@@ -1,8 +1,9 @@
 <?php
 
-namespace PHPixie\Auth;
+namespace PHPixie\Auth\Repositories\Repository\Type\Login;
 
-class Repositories
+interface User extends \PHPixie\Auth\Repositories\Repository\User
 {
-    
+    public function login();
+    public function passwordHash();
 }

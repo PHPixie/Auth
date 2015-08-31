@@ -7,7 +7,7 @@ class Domains implements \PHPixie\Bundles\Registry
     protected $builder;
     protected $configData;
     
-    protected $domains;
+    protected $domains = array();
     
     public function __construct($builder, $configData)
     {
@@ -44,9 +44,14 @@ class Domains implements \PHPixie\Bundles\Registry
         $domains = array();
         foreach($this->configData->keys() as $name) {
             $domainConfig = $this->configData->slice($name);
-            $domains[$name] = $this->builder->buildDomain($domainConfig);
+            $this->domains[$name] = $this->buildDomain($name, $domainConfig);
         }
         
         $this->domains = $domains;
+    }
+    
+    protected function buildDomain($name, $configData)
+    {
+        return new Domains\Domain($name, $configData);
     }
 }

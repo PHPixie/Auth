@@ -7,24 +7,30 @@ class Session extends    \PHPixie\Auth\Handlers\Handler
 {
     public function check()
     {
-        $session = $this->httpContext()->session();
-        $userId = $session->get($this->sessionIdKey);
+        $session = $this->session();
+        $userId = $session->get($this->sessionKey);
         if($userId === null) {
-            return false;
+            return null;
         }
         
         $user = $this->userRepository->get($userId);
         if($user === null) {
-            return false;
+            return null;
         }
         
-        $this->authContext->setUser($user);
+        $this->domain->setUser($user, $this->name);
+        return $user;
     }
     
     public function persist()
     {
-        $userId = $user->id();
-        $session->set($this->sessionIdKey, $userId);
+        $user = $this->domain->requireUser();
+        $session->set($this->sessionKey, $user->id());
+    }
+    
+    public function forget()
+    {
+        $this->session()->remove($this->sessionKey);
     }
     
     protected function session()

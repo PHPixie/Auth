@@ -5,50 +5,83 @@ namespace PHPixie\Auth\Domains;
 class Domain
 {
     protected $builder;
+    protected $name;
     protected $configData;
     
-    protected $handlers;
+    protected $providers = array();
     
-    public function __construct($builder, $configData)
+    public function __construct($builder, $name, $configData)
     {
         $this->builder    = $builder;
+        $this->name       = $name;
         $this->configData = $configData;
     }
     
     public function repository()
     {
         if($this->repository === null) {
-            $repositoryConfig = $this->configData->slice('repository');
-            $this->repository = $this->buildRepository($repositoryConfig);
+            $repositoryName = $this->configData->get('repository', 'default');
+            $repositories = $this->builder->repositories();
+            $this->repository = $repositories->get($repositoryName);
         }
         
         return $this->repository;
     }
     
-    public function handler($name)
+    public function provider($name)
     {
         $this->requireHandlers();
-        return $this->handlers[$name];
+        return $this->providers[$name];
     }
     
-    public function handlers()
+    public function providers()
     {
         $this->requireHandlers();
-        return $this->handlers;
+        return $this->providers;
     }
     
-    protected function requireHandlers()
+    public function check()
     {
-        if($this->handlers !== null) {
+        foreach($this->peoviders() as $provider) {
+            if($provider instanceof \PHPixie\Auth\Providers\Provider\Autologin) {
+                if($provider->check() !== null) {
+                    break;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    public function clearUser()
+    {
+        $this->authContext()->clearUser($this->name);
+    }
+    
+    public function setUser($user, $providerName)
+    {
+        $this->authContext()->setUser($this->name, $user, $providerName);
+    }
+    
+    protected function authContext()
+    {
+        return $this->builder->context();
+    }
+    
+    protected function requireProviders()
+    {
+        if($this->providers !== null) {
             return;
         }
         
-        $handlers = array();
+        $providerBuilder = $this->builder->providers();
+        
+        $providers = array();
         foreach($this->configData->keys() as $name) {
-            $domainConfig = $this->configData->slice($name);
-            $handlers[$name] = $this->builder->buildDomain($domainConfig);
+            $providerConfig = $this->configData->slice($name);
+            $providers[$name] = $providerBuilder->buildFromConfig($providerConfig);
         }
         
-        $this->handlers = $handlers;
+        $this->providers = $providers;
     }
 }
