@@ -1,11 +1,11 @@
 <?php
 
-namespace PHPixie\Auth\Handlers\Tokens\Storage;
+namespace PHPixie\Auth\Handlers\Tokens;
 
 interface Storage
 {
-    public function insert($token, $expires);
+    public function insert($token);
     public function get($series);
-    public function update($series, $challenge, $expires);
+    public function update($token);
     public function remove($series);
 }

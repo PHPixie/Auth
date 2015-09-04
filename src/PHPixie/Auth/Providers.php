@@ -36,7 +36,7 @@ class Providers
     
     public function session($domain, $name, $configData)
     {
-        return new Providers\Type\Password(
+        return new Providers\Type\Session(
             $this->httpContextContainer,
             $domain,
             $name,

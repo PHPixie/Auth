@@ -8,22 +8,33 @@ class Tokens
         'database'
     );
     
-    public function token($userId, $series, $challenge)
+    protected $handlers;
+    protected $database;
+    
+    public function __construct($handlers, $database)
     {
-        return new Tokens\Token($userId, $series, $challenge);
+        $this->handlers = $handlers;
+        $this->database = $database;
     }
     
-    protected function handler($storage)
+    public function token($series, $userId, $challenge, $expires, $passphrase = null)
     {
-        return new Tokens\Hander(
+        return new Tokens\Token($series, $userId, $challenge, $expires, $passphrase);
+    }
+    
+    public function handler($configData)
+    {
+        return new Tokens\Handler(
+            $this,
             $this->handlers->random(),
-            $storage
+            $configData
         );
     }
         
     public function sqlStorage($connection, $configData)
     {
         return new Tokens\Storage\Database\SQL(
+            $this,
             $connection,
             $configData
         );
@@ -32,16 +43,10 @@ class Tokens
     public function mongoStorage($connection, $configData)
     {
         return new Tokens\Storage\Database\Mongo(
+            $this,
             $connection,
             $configData
         );
-    }
-    
-    public function buildHandler($configData)
-    {
-        $type = $configData->get('type', 'database');
-        $method = 'build'.$type.'Storage';
-        return $this->$method($configData);
     }
     
     public function buildStorage($configData)
@@ -57,14 +62,15 @@ class Tokens
     
     public function databaseStorage($configData)
     {
+        $connectionName = $configData->get('connection', 'default');
         $connection = $this->database->get($connectionName);
         
         if($connection instanceof \PHPixie\Database\Type\SQL\Connection) {
-            return new $this->sqlDatabase($connection, $configData);
+            return $this->sqlStorage($connection, $configData);
         }
         
         if($connection instanceof \PHPixie\Database\Driver\Mongo\Connection) {
-            return new $this->mongoDatabase($connection, $configData);
+            return $this->mongoStorage($connection, $configData);
         }
         
         $class = get_class($connection);

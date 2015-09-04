@@ -8,7 +8,8 @@ class Domain
     protected $name;
     protected $configData;
     
-    protected $providers = array();
+    protected $repository;
+    protected $providers = null;
     
     public function __construct($builder, $name, $configData)
     {
@@ -30,19 +31,19 @@ class Domain
     
     public function provider($name)
     {
-        $this->requireHandlers();
+        $this->requireProviders();
         return $this->providers[$name];
     }
     
     public function providers()
     {
-        $this->requireHandlers();
+        $this->requireProviders();
         return $this->providers;
     }
     
     public function check()
     {
-        foreach($this->peoviders() as $provider) {
+        foreach($this->providers() as $provider) {
             if($provider instanceof \PHPixie\Auth\Providers\Provider\Autologin) {
                 if($provider->check() !== null) {
                     break;
@@ -55,12 +56,32 @@ class Domain
     
     public function clearUser()
     {
-        $this->authContext()->clearUser($this->name);
+        $this->authContext()->unsetUser($this->name);
+        foreach($this->providers() as $provider) {
+            if($provider instanceof \PHPixie\Auth\Providers\Provider\Autologin) {
+                $provider->forget();
+            }
+        }
     }
     
     public function setUser($user, $providerName)
     {
         $this->authContext()->setUser($this->name, $user, $providerName);
+    }
+    
+    public function user()
+    {
+        return $this->authContext()->user($this->name);
+    }
+    
+    public function requireUser()
+    {
+        $user = $this->user();
+        if($user === null) {
+            throw new \PHPixie\Auth\Exception("No user set");
+        }
+        
+        return $user;
     }
     
     protected function authContext()
@@ -77,9 +98,14 @@ class Domain
         $providerBuilder = $this->builder->providers();
         
         $providers = array();
-        foreach($this->configData->keys() as $name) {
-            $providerConfig = $this->configData->slice($name);
-            $providers[$name] = $providerBuilder->buildFromConfig($providerConfig);
+        $providersConfig = $this->configData->slice('providers');
+        foreach($providersConfig->keys() as $name) {
+            $providerConfig = $providersConfig->slice($name);
+            $providers[$name] = $providerBuilder->buildFromConfig(
+                $this,
+                $name,
+                $providerConfig
+            );
         }
         
         $this->providers = $providers;

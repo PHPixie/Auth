@@ -2,12 +2,12 @@
 
 namespace PHPixie\Auth;
 
-class Domains implements \PHPixie\Bundles\Registry
+class Domains
 {
     protected $builder;
     protected $configData;
     
-    protected $domains = array();
+    protected $domains = null;
     
     public function __construct($builder, $configData)
     {
@@ -44,7 +44,7 @@ class Domains implements \PHPixie\Bundles\Registry
         $domains = array();
         foreach($this->configData->keys() as $name) {
             $domainConfig = $this->configData->slice($name);
-            $this->domains[$name] = $this->buildDomain($name, $domainConfig);
+            $domains[$name] = $this->buildDomain($name, $domainConfig);
         }
         
         $this->domains = $domains;
@@ -52,6 +52,6 @@ class Domains implements \PHPixie\Bundles\Registry
     
     protected function buildDomain($name, $configData)
     {
-        return new Domains\Domain($name, $configData);
+        return new Domains\Domain($this->builder, $name, $configData);
     }
 }

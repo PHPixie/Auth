@@ -14,7 +14,7 @@ class Repositories
     public function get($name)
     {
         if($this->repositoryRegistry !== null) {
-            $repository = $this->repositoryRegistry->get($name);
+            $repository = $this->repositoryRegistry->repository($name);
             if($repository !== null) {
                 return $repository;
             }

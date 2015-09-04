@@ -1,19 +1,20 @@
 <?php
 
-namespace PHPixie\Auth\Providers;
+namespace PHPixie\Auth\Providers\Type;
 
 class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
              implements \PHPixie\Auth\Providers\Provider\Persistent
 {
     protected $tokens;
-    
+    protected $httpContextContainer;
     protected $cookieName;
     protected $tokenHandler;
     
-    public function __construct($tokens, $domain, $name, $configData)
+    public function __construct($tokens, $httpContextContainer, $domain, $name, $configData)
     {
-        $this->tokens     = $tokens;
-        $this->cookieName = $configData->get('cookie');
+        $this->tokens              = $tokens;
+        $this->httpContextContainer = $httpContextContainer;
+        $this->cookieName = $configData->get('cookie', 'auth');
         
         parent::__construct($domain, $name, $configData);
     }
@@ -27,7 +28,7 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
             return null;
         }
         
-        $token = $this->tokenHandler()->get($encodedToken);
+        $token = $this->tokenHandler()->getByString($encodedToken);
         
         if($token === null) {
             $this->forget();
@@ -35,7 +36,8 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
         }
         
         $userId = $token->userId();
-        $user = $this->userRepository()->get($userId);
+        $user = $this->repository()->getById($userId);
+        
         if($user === null) {
             $this->forget();
             return null;
@@ -59,7 +61,7 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
     public function persist($lifetime = null)
     {
         if($lifetime === null) {
-            $lifetime = $configData->get('defaultLifetime', 14*24*3600);
+            $lifetime = $this->configData->get('defaultLifetime', 14*24*3600);
         }
         
         $user = $this->domain->requireUser();
@@ -75,10 +77,9 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
     protected function setCookie($token)
     {
         $cookies = $this->cookies();
-        $token = $this->tokenHandler->refresh($token);
         $cookies->set(
             $this->cookieName,
-            $token->encode(),
+            $token->string(),
             $token->expires() - time()
         );
     }
@@ -87,7 +88,7 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
     {
         if($this->tokenHandler === null) {
             $configData = $this->configData->slice('tokens');
-            $this->tokenHandler = $this->tokens->buildHandler($configData);
+            $this->tokenHandler = $this->tokens->handler($configData);
         }
         
         return $this->tokenHandler;

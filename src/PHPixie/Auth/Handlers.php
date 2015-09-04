@@ -50,6 +50,9 @@ class Handlers
     
     protected function buildTokens()
     {
-        return new Handlers\Tokens($this->database);
+        return new Handlers\Tokens(
+            $this,
+            $this->database
+        );
     }
 }

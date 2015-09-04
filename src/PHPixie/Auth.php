@@ -8,14 +8,16 @@ class Auth
     
     public function __construct(
         $database,
-        $externalRepositories = null,
+        $configData,
+        $repositoryRegistry   = null,
         $httpContextContainer = null,
         $authContextContainer = null
     )
     {
         $this->builder = $this->buildBuilder(
             $database,
-            $externalRepositories,
+            $configData,
+            $repositoryRegistry,
             $httpContextContainer,
             $authContextContainer
         );
@@ -30,6 +32,11 @@ class Auth
     {
         return $this->builder->domains()->get($name);
     }
+    
+    public function buildContext()
+    {
+        return $this->builder->buildContext();
+    }
         
     public function builder()
     {
@@ -38,14 +45,16 @@ class Auth
     
     protected function buildBuilder(
         $database,
-        $externalRepositories,
+        $configData,
+        $repositoryRegistry,
         $httpContextContainer,
         $authContextContainer
     )
     {
         return new Auth\Builder(
             $database,
-            $externalRepositories,
+            $configData,
+            $repositoryRegistry,
             $httpContextContainer,
             $authContextContainer
         );

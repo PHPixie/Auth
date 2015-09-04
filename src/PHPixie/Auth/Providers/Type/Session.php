@@ -1,10 +1,21 @@
 <?php
 
-namespace PHPixie\Auth\Providers;
+namespace PHPixie\Auth\Providers\Type;
 
-class Session extends    \PHPixie\Auth\Handlers\Handler
-              implements \PHPixie\Auth\Handlers\Handler\Persistent
+class Session extends    \PHPixie\Auth\Providers\Provider\Implementation
+              implements \PHPixie\Auth\Providers\Provider\Persistent
 {
+    protected $httpContextContainer;
+    protected $sessionKey;
+    
+    public function __construct($httpContextContainer, $domain, $name, $configData)
+    {
+        $this->httpContextContainer = $httpContextContainer;
+        $this->sessionKey = $configData->get('key');
+        
+        parent::__construct($domain, $name, $configData);
+    }
+    
     public function check()
     {
         $session = $this->session();
@@ -13,7 +24,7 @@ class Session extends    \PHPixie\Auth\Handlers\Handler
             return null;
         }
         
-        $user = $this->userRepository->get($userId);
+        $user = $this->repository()->getById($userId);
         if($user === null) {
             return null;
         }
@@ -25,7 +36,7 @@ class Session extends    \PHPixie\Auth\Handlers\Handler
     public function persist()
     {
         $user = $this->domain->requireUser();
-        $session->set($this->sessionKey, $user->id());
+        $this->session()->set($this->sessionKey, $user->id());
     }
     
     public function forget()

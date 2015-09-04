@@ -2,18 +2,20 @@
 
 namespace PHPixie\Auth\Handlers\Tokens\Storage;
 
-abstract class Database implements \PHPixie\Auth\Persistance\Storage
+abstract class Database implements \PHPixie\Auth\Handlers\Tokens\Storage
 {
+    protected $tokens;
     protected $connection;
     
-    public function __construct($connection)
+    public function __construct($tokens, $connection)
     {
+        $this->tokens = $tokens;
         $this->connection = $connection;
     }
     
-    public function insert($token, $expires)
+    public function insert($token)
     {
-        $query = $this->connection()->insertQuery();
+        $query = $this->connection->insertQuery();
         $this->setSource($query);
         
         $query
@@ -21,26 +23,24 @@ abstract class Database implements \PHPixie\Auth\Persistance\Storage
                 'series'    => $token->series(),
                 'userId'    => $token->userId(),
                 'challenge' => $token->challenge(),
-                'expires'   => $expires
+                'expires'   => $token->expires()
             ))
             ->execute();
     }
     
     public function get($series)
     {
-        $query = $this->connection()->insertQuery();
+        $query = $this->connection->deleteQuery();
         $this->setSource($query);
         
         $query
-            ->table($this->data)
-            ->where('expires', '<', time())
-            ->execute();
+            ->where('expires', '<', time());
+            //->execute();
         
-        $query = $this->connection()->selectQuery();
+        $query = $this->connection->selectQuery();
         $this->setSource($query);
         
         $data = $query
-            ->table($this->table)
             ->where('series', $series)
             ->execute()
             ->current();
@@ -49,31 +49,32 @@ abstract class Database implements \PHPixie\Auth\Persistance\Storage
             return null;
         }
         
-        return $this->persistance->token(
+        return $this->tokens->token(
             $data->series,
             $data->userId,
-            $data->challenge
+            $data->challenge,
+            $data->expires
         );
     }
     
-    public function update($series, $challenge, $expires)
+    public function update($token)
     {
-        $query = $this->connection()->updateQuery();
+        $query = $this->connection->updateQuery();
         $this->setSource($query);
         
         $query
             ->table($this->table)
             ->set(array(
-                'challenge' => $challenge,
-                'expires'   => $expires
+                'challenge' => $token->challenge(),
+                'expires'   => $token->expires()
             ))
-            ->where('series', $series)
+            ->where('series', $token->series())
             ->execute();
     }
     
     public function remove($series)
     {
-        $query = $this->connection()->deleteQuery();
+        $query = $this->connection->deleteQuery();
         $this->setSource($query);
         
         $query

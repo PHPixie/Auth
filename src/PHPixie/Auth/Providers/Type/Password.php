@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPixie\Auth\Handlers\Type;
+namespace PHPixie\Auth\Providers\Type;
 
 class Password extends \PHPixie\Auth\Providers\Provider\Implementation
 {
@@ -19,7 +19,7 @@ class Password extends \PHPixie\Auth\Providers\Provider\Implementation
     
     public function login($login, $password)
     {
-        $user = $this->userRepository()->getByLogin($login);
+        $user = $this->repository()->getByLogin($login);
         
         if($user === null) {
             return null;

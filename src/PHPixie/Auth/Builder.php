@@ -5,6 +5,8 @@ namespace PHPixie\Auth;
 class Builder
 {
     protected $database;
+    protected $configData;
+    protected $repositoryRegistry;
     protected $httpContextContainer;
     protected $authContextContainer;
     
@@ -12,12 +14,14 @@ class Builder
     
     public function __construct(
         $database,
-        $externalRepositories = null,
+        $configData,
+        $repositoryRegistry   = null,
         $httpContextContainer = null,
         $authContextContainer = null
     )
     {
         $this->database             = $database;
+        $this->configData           = $configData;
         $this->repositoryRegistry   = $repositoryRegistry;
         $this->httpContextContainer = $httpContextContainer;
         $this->authContextContainer = $authContextContainer;
@@ -45,16 +49,16 @@ class Builder
     
     public function contextContainer()
     {
-        if($this->contextContainer === null) {
-            $this->contextContainer = $this->buildContextContainer();
+        if($this->authContextContainer === null) {
+            $this->authContextContainer = $this->buildContextContainer();
         }
         
-        return $this->contextContainer;
+        return $this->authContextContainer;
     }
     
     public function context()
     {
-        return $this->contextContainer()->context();
+        return $this->contextContainer()->authContext();
     }
     
     public function buildContext()

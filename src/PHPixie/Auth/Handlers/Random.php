@@ -6,7 +6,7 @@ class Random
 {
     public function string($length)
     {
-        $bytesLength = ceil($length/2);
+        $bytesLength = (int) ceil($length/2);
         $bytes = $this->bytes($bytesLength);
         $string = bin2hex($bytes);
         return substr($string, 0, $length);

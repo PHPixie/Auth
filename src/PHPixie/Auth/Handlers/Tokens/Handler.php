@@ -1,9 +1,10 @@
 <?php
 
-namespace PHPixie\Auth\Tokens;
+namespace PHPixie\Auth\Handlers\Tokens;
 
 class Handler
 {
+    protected $tokens;
     protected $random;
     protected $configData;
     
@@ -13,9 +14,10 @@ class Handler
     
     public function __construct($tokens, $random, $configData)
     {
+        $this->tokens     = $tokens;
         $this->random     = $random;
         
-        $storageConfig = $this->configData->slice('storage');
+        $storageConfig = $configData->slice('storage');
         $this->storage = $tokens->buildStorage($storageConfig);
         
         $this->seriesLength     = $configData->get('seriesLength',30);
@@ -24,21 +26,23 @@ class Handler
     
     public function create($user, $lifetime)
     {
-        $series     = $random->string($this->seriesLength);
-        $passphrase = $random->string($this->passphraseLength);
+        $series     = $this->random->string($this->seriesLength);
+        $passphrase = $this->random->string($this->passphraseLength);
         $challenge  = $this->challenge($series, $passphrase);
         
-        $token = $this->token(
-            $user->id(),
+        $token = $this->tokens->token(
             $series,
-            $challenge
+            $user->id(),
+            $challenge,
+            $this->expires($lifetime),
+            $this->encodeToken($series, $passphrase)
         );
         
-        $tokenStorage->insert($token, $this->expires($lifetime));
-        return $this->tokenString($series, $passphrase);
+        $this->storage->insert($token);
+        return $token;
     }
     
-    public function validate($encodedToken)
+    public function getByString($encodedToken)
     {
         $token = $this->decodeToken($encodedToken);
         
@@ -48,14 +52,14 @@ class Handler
         
         list($series, $passphrase) = $token;
         
-        $token = $tokenStorage->get($series);
+        $token = $this->storage->get($series);
         
         if($token === null) {
             return null;
         }
         
         if($this->challenge($series, $passphrase) !== $token->challenge()) {
-            $this->tokenStorage->remove($series);
+            $this->storage->remove($series);
             return null;
         }
         
@@ -64,13 +68,19 @@ class Handler
     
     public function refresh($token)
     {
-        list($series, $passphrase) = $this->decodeToken($encodedToken);
+        $passphrase = $this->random->string($this->passphraseLength);
+        $challenge  = $this->challenge($token->series(), $passphrase);
         
-        $passphrase = $random->string($this->passphraseLength);
-        $challenge  = $this->challenge($series, $passphrase);
+        $token = $this->tokens->token(
+            $token->series(),
+            $token->userId(),
+            $challenge,
+            $token->expires(),
+            $this->encodeToken($token->series(), $passphrase)
+        );
         
-        $token = $this->tokenStorage->update($series, $challenge, $this->expires($lifetime));
-        return $this->encodeToken($series, $passphrase);
+        $this->storage->update($token);
+        return $token;
     }
     
     public function remove($token)
@@ -108,4 +118,8 @@ class Handler
         return $token;
     }
     
+    protected function expires($lifetime)
+    {
+        return time()+$lifetime;
+    }
 }

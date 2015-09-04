@@ -1,14 +1,14 @@
 <?php
 
-namespace PHPixie\Auth\Persistance\Storage\Database;
+namespace PHPixie\Auth\Handlers\Tokens\Storage\Database;
 
 class Mongo extends \PHPixie\Auth\Handlers\Tokens\Storage\Database
 {
     protected $collection;
     
-    public function __construct($connection, $configData)
+    public function __construct($tokens, $connection, $configData)
     {
-        parent::__construct($connection);
+        parent::__construct($tokens, $connection);
         $this->collection = $configData->getRequired('collection');
     }
     
