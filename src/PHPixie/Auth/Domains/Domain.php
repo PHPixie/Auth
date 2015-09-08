@@ -84,6 +84,11 @@ class Domain
         return $user;
     }
     
+    public function name()
+    {
+        return $this->name;
+    }
+    
     protected function authContext()
     {
         return $this->builder->context();
