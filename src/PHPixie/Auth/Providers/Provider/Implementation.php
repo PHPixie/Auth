@@ -6,6 +6,7 @@ abstract class Implementation implements \PHPixie\Auth\Providers\Provider
 {
     protected $domain;
     protected $name;
+    protected $configData;
     
     public function __construct($domain, $name, $configData)
     {

@@ -21,7 +21,7 @@ class Domain
     public function repository()
     {
         if($this->repository === null) {
-            $repositoryName = $this->configData->get('repository', 'default');
+            $repositoryName = $this->configData->getRequired('repository');
             $repositories = $this->builder->repositories();
             $this->repository = $repositories->get($repositoryName);
         }
@@ -41,37 +41,47 @@ class Domain
         return $this->providers;
     }
     
-    public function check()
+    public function checkUser()
     {
+        $this->unsetUser();
+        
+        $user = null;
         foreach($this->providers() as $provider) {
             if($provider instanceof \PHPixie\Auth\Providers\Provider\Autologin) {
-                if($provider->check() !== null) {
+                $user = $provider->check();
+                if($user !== null) {
                     break;
                 }
             }
         }
         
-        return null;
+        return $user;
     }
     
-    public function clearUser()
+    public function forgetUser()
     {
-        $this->authContext()->unsetUser($this->name);
+        $this->unsetUser();
+        
         foreach($this->providers() as $provider) {
-            if($provider instanceof \PHPixie\Auth\Providers\Provider\Autologin) {
+            if($provider instanceof \PHPixie\Auth\Providers\Provider\Persistent) {
                 $provider->forget();
             }
         }
     }
     
+    public function unsetUser()
+    {
+        $this->context()->unsetUser($this->name);
+    }
+    
     public function setUser($user, $providerName)
     {
-        $this->authContext()->setUser($this->name, $user, $providerName);
+        $this->context()->setUser($this->name, $user, $providerName);
     }
     
     public function user()
     {
-        return $this->authContext()->user($this->name);
+        return $this->context()->user($this->name);
     }
     
     public function requireUser()
@@ -89,9 +99,10 @@ class Domain
         return $this->name;
     }
     
-    protected function authContext()
+    protected function context()
     {
-        return $this->builder->context();
+        $contextContainer = $this->builder->contextContainer();
+        return $contextContainer->authContext();
     }
     
     protected function requireProviders()
