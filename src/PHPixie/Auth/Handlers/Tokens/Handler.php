@@ -85,17 +85,8 @@ class Handler
     
     public function remove($token)
     {
-        list($series, $passphrase) = $this->decodeToken($encodedToken);
-        $this->tokenStorage->removeSeries($series);
-    }
-    
-    protected function storage()
-    {
-        if($this->storage === null) {
-            
-        }
-        
-        return $this->storage;
+        list($series, $passphrase) = $this->decodeToken($token);
+        $this->storage->remove($series);
     }
     
     protected function challenge($series, $passphrase)

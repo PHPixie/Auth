@@ -34,8 +34,8 @@ abstract class Database implements \PHPixie\Auth\Handlers\Tokens\Storage
         $this->setSource($query);
         
         $query
-            ->where('expires', '<', time());
-            //->execute();
+            ->where('expires', '<', time())
+            ->execute();
         
         $query = $this->connection->selectQuery();
         $this->setSource($query);
@@ -63,7 +63,6 @@ abstract class Database implements \PHPixie\Auth\Handlers\Tokens\Storage
         $this->setSource($query);
         
         $query
-            ->table($this->table)
             ->set(array(
                 'challenge' => $token->challenge(),
                 'expires'   => $token->expires()
@@ -78,7 +77,6 @@ abstract class Database implements \PHPixie\Auth\Handlers\Tokens\Storage
         $this->setSource($query);
         
         $query
-            ->table($this->table)
             ->where('series', $series)
             ->execute();
     }

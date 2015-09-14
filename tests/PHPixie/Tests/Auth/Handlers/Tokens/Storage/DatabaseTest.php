@@ -56,6 +56,60 @@ abstract class DatabaseTest extends \PHPixie\Test\Testcase
     }
     
     /**
+     * @covers ::get
+     * @covers ::<protected>
+     */
+    public function testGet()
+    {
+        $this->getTest();
+        $this->getTest(true);
+    }
+    
+    protected function getTest($exists = false)
+    {
+        $query = $this->getQuery('delete');
+        $this->method($this->connection, 'deleteQuery', $query, array(), 0);
+        
+        $this->prepareSetSource($query, 0);
+        $this->method($query, 'where', function($field, $operator, $value) use($query) {
+            $this->assertSame('expires', $field);
+            $this->assertSame('<', $operator);
+            $this->assertTrue(time() - $value <= 1);
+            return $query;
+        }, null, 1);
+        $this->method($query, 'execute', null, array(), 2);
+        
+        $query = $this->getQuery('select');
+        $this->method($this->connection, 'selectQuery', $query, array(), 1);
+        
+        $this->prepareSetSource($query, 0);
+        $this->method($query, 'where', $query, array('series', 'pixie'), 1);
+        
+        $result = $this->quickMock('\PHPixie\Database\Result');
+        $this->method($query, 'execute', $result, array(), 2);
+        
+        if($exists) {
+            $data = (object) array(
+                'series'    => 'pixie',
+                'userId'    => 5,
+                'challenge' => 'trixie',
+                'expires'   => 17
+            );
+            
+            $token = $this->getToken();
+            $this->method($this->tokens, 'token', $token, (array) $data, 0);
+            
+        }else {
+            $data  = null;
+            $token = null;
+        }
+        
+        $this->method($result, 'current', $data, array(), 0);
+        
+        $this->assertSame($token, $this->storage->get('pixie'));
+    }
+    
+    /**
      * @covers ::update
      * @covers ::<protected>
      */
@@ -79,7 +133,23 @@ abstract class DatabaseTest extends \PHPixie\Test\Testcase
         $this->method($query, 'where', $query, array('series', 'pixie'), 2);
         $this->method($query, 'execute', null, array(), 3);
         
-        $this->storage->insert($token);
+        $this->storage->update($token);
+    }
+    
+    /**
+     * @covers ::remove
+     * @covers ::<protected>
+     */
+    public function testRemove()
+    {
+        $query = $this->getQuery('delete');
+        $this->method($this->connection, 'deleteQuery', $query, array(), 0);
+        
+        $this->prepareSetSource($query, 0);
+        $this->method($query, 'where', $query, array('series', 'pixie'), 1);
+        $this->method($query, 'execute', null, array(), 2);
+        
+        $this->storage->remove('pixie');
     }
     
     protected function token($properties = array())

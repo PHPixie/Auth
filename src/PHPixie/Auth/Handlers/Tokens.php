@@ -17,9 +17,9 @@ class Tokens
         $this->database = $database;
     }
     
-    public function token($series, $userId, $challenge, $expires, $passphrase = null)
+    public function token($series, $userId, $challenge, $expires, $string = null)
     {
-        return new Tokens\Token($series, $userId, $challenge, $expires, $passphrase);
+        return new Tokens\Token($series, $userId, $challenge, $expires, $string);
     }
     
     public function handler($configData)
