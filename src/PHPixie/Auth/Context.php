@@ -7,7 +7,7 @@ class Context
     protected $users = array();
     protected $usedProviders = array();
     
-    public function setUser($domain, $user, $providerName = null)
+    public function setUser($user, $domain = 'default', $providerName = null)
     {
         $this->users[$domain]         = $user;
         $this->usedProviders[$domain] = $providerName;
@@ -30,6 +30,10 @@ class Context
     
     public function usedProvider($domain = 'default')
     {
-        return $this->usedProviders[$domain];
+        if(array_key_exists($domain, $this->usedProviders)) {
+            return $this->usedProviders[$domain];
+        }
+        
+        return null;
     }
 }

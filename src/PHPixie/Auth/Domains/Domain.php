@@ -76,7 +76,7 @@ class Domain
     
     public function setUser($user, $providerName)
     {
-        $this->context()->setUser($this->name, $user, $providerName);
+        $this->context()->setUser($user, $this->name, $providerName);
     }
     
     public function user()

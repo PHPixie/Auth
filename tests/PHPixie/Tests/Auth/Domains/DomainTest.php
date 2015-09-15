@@ -135,7 +135,7 @@ class DomainTest extends \PHPixie\Test\Testcase
         $context = $this->prepareContext();
         
         $user = $this->getUser();
-        $this->method($context, 'setUser', null, array($this->name, $user, 'pixie'), 0);
+        $this->method($context, 'setUser', null, array($user, $this->name, 'pixie'), 0);
         
         $this->domain->setUser($user, 'pixie');
     }

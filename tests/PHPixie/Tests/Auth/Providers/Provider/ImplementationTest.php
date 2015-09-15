@@ -58,12 +58,12 @@ abstract class ImplementationTest extends \PHPixie\Test\Testcase
     
     protected function getRepository()
     {
-        return $this->quiickMock('\PHPixie\Auth\Repositories\Repository');
+        return $this->quickMock('\PHPixie\Auth\Repositories\Repository');
     }
     
     protected function getUser()
     {
-        return $this->quickMock('\PHPixie\Repositories\Repository\User');
+        return $this->quickMock('\PHPixie\Auth\Repositories\Repository\User');
     }
     
     protected function getSliceData()

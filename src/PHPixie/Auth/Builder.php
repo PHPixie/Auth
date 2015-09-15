@@ -71,6 +71,11 @@ class Builder
         return new Context\Container\Implementation();
     }
     
+    public function buildDomain($name, $configData)
+    {
+        return new Domains\Domain($this, $name, $configData);
+    }
+    
     protected function instance($name)
     {
         if(!array_key_exists($name, $this->instances)) {

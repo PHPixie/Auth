@@ -15,7 +15,7 @@ class Domains
         $this->configData = $configData;
     }
     
-    public function domains()
+    public function asArray()
     {
         $this->requireDomains();
         return $this->domains;
@@ -24,14 +24,18 @@ class Domains
     public function get($name)
     {
         $this->requireDomains();
-        return $this->domains[$name];
+        if(array_key_exists($name, $this->domains)) {
+            return $this->domains[$name];
+        }
+        
+        throw new \PHPixie\Auth\Exception("Domain '$name' does not exist");
     }    
     
-    public function check()
+    public function checkUser()
     {
         $this->requireDomains();
         foreach($this->domains as $domain) {
-            $domain->check();
+            $domain->checkUser();
         }
     }
     
@@ -44,14 +48,9 @@ class Domains
         $domains = array();
         foreach($this->configData->keys() as $name) {
             $domainConfig = $this->configData->slice($name);
-            $domains[$name] = $this->buildDomain($name, $domainConfig);
+            $domains[$name] = $this->builder->buildDomain($name, $domainConfig);
         }
         
         $this->domains = $domains;
-    }
-    
-    protected function buildDomain($name, $configData)
-    {
-        return new Domains\Domain($this->builder, $name, $configData);
     }
 }

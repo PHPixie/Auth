@@ -11,7 +11,9 @@ class Session extends    \PHPixie\Auth\Providers\Provider\Implementation
     public function __construct($httpContextContainer, $domain, $name, $configData)
     {
         $this->httpContextContainer = $httpContextContainer;
-        $this->sessionKey = $configData->get('key');
+        
+        $defaultKey = $domain->name().'UserId';
+        $this->sessionKey = $configData->get('key', $defaultKey);
         
         parent::__construct($domain, $name, $configData);
     }
@@ -26,6 +28,7 @@ class Session extends    \PHPixie\Auth\Providers\Provider\Implementation
         
         $user = $this->repository()->getById($userId);
         if($user === null) {
+            $this->forget();
             return null;
         }
         
