@@ -6,7 +6,7 @@ class Repositories
 {
     protected $repositoryRegistry;
     
-    public function __construct($repositoryRegistry)
+    public function __construct($repositoryRegistry = null)
     {
         $this->repositoryRegistry = $repositoryRegistry;
     }

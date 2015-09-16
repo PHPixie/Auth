@@ -32,6 +32,8 @@ class SessionTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationT
      */
     public function testCheck()
     {
+        $this->prepareSessionKey();
+        
         $this->checkTest();
         $this->checkTest(true);
         $this->checkTest(true, true);
@@ -70,6 +72,7 @@ class SessionTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationT
         $this->method($this->domain, 'requireUser', $user, array(), 0);
         $this->method($user, 'id', 7, array(), 0);
         
+        $this->prepareSessionKey(1);
         $this->method($this->session, 'set', null, array($this->sessionKey, 7), 0);
         
         $this->provider->persist();
@@ -79,22 +82,26 @@ class SessionTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationT
      * @covers ::forget
      * @covers ::<protected>
      */
-    public function testForget($sessionAt = 0)
+    public function testForget()
     {
-        $this->prepareForget($sessionAt);
+        $this->prepareSessionKey();
+        $this->prepareForget();
         $this->provider->forget();
     }
     
-    protected function prepareForget($sessionAt)
+    protected function prepareForget($sessionAt = 0)
     {
         $this->method($this->session, 'remove', null, array($this->sessionKey), $sessionAt);    
+    }
+            
+    protected function prepareSessionKey($domainAt = 0)
+    {
+        $this->method($this->domain, 'name', 'pixie', array(), $domainAt);
+        $this->method($this->configData, 'get', $this->sessionKey, array('key', 'pixieUserId'), 0);
     }
     
     protected function provider()
     {
-        $this->method($this->domain, 'name', 'pixie', array(), 0);
-        $this->method($this->configData, 'get', $this->sessionKey, array('key', 'pixieUserId'), 0);
-        
         return new \PHPixie\Auth\Providers\Type\Session(
             $this->httpContextContainer,
             $this->domain,

@@ -155,15 +155,17 @@ class HandlerTest extends \PHPixie\Test\Testcase
     }
     
     /**
-     * @covers ::remove
+     * @covers ::removeByString
      * @covers ::<protected>
      */
-    public function testRemove()
+    public function testRemoveByString()
     {
+        $this->handler->removeByString('test');
+        
         $encoded = $this->encodeToken('pixie');
         $this->method($this->storage, 'remove', null, array('pixie'), 0);
         
-        $this->handler->remove($encoded);
+        $this->handler->removeByString($encoded);
     }
     
     protected function encodeToken($series, $passphrase = 'trixie')

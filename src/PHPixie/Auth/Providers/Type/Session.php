@@ -12,16 +12,13 @@ class Session extends    \PHPixie\Auth\Providers\Provider\Implementation
     {
         $this->httpContextContainer = $httpContextContainer;
         
-        $defaultKey = $domain->name().'UserId';
-        $this->sessionKey = $configData->get('key', $defaultKey);
-        
         parent::__construct($domain, $name, $configData);
     }
     
     public function check()
     {
         $session = $this->session();
-        $userId = $session->get($this->sessionKey);
+        $userId = $session->get($this->sessionKey());
         if($userId === null) {
             return null;
         }
@@ -39,17 +36,27 @@ class Session extends    \PHPixie\Auth\Providers\Provider\Implementation
     public function persist()
     {
         $user = $this->domain->requireUser();
-        $this->session()->set($this->sessionKey, $user->id());
+        $this->session()->set($this->sessionKey(), $user->id());
     }
     
     public function forget()
     {
-        $this->session()->remove($this->sessionKey);
+        $this->session()->remove($this->sessionKey());
     }
     
     protected function session()
     {
         $httpContext = $this->httpContextContainer->httpContext();
         return $httpContext->session();
+    }
+    
+    protected function sessionKey()
+    {
+        if($this->sessionKey === null) {
+            $defaultKey = $this->domain->name().'UserId';
+            $this->sessionKey = $this->configData->get('key', $defaultKey);
+        }
+        
+        return $this->sessionKey;
     }
 }

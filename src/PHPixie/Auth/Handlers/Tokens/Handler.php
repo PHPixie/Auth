@@ -66,6 +66,18 @@ class Handler
         return $token;
     }
     
+    public function removeByString($encodedToken)
+    {
+        $token = $this->decodeToken($encodedToken);
+        
+        if($token === null) {
+            return;
+        }
+        
+        list($series, $passphrase) = $token;
+        $this->storage->remove($series);
+    }
+    
     public function refresh($token)
     {
         $passphrase = $this->random->string($this->passphraseLength);
@@ -81,12 +93,6 @@ class Handler
         
         $this->storage->update($token);
         return $token;
-    }
-    
-    public function remove($token)
-    {
-        list($series, $passphrase) = $this->decodeToken($token);
-        $this->storage->remove($series);
     }
     
     protected function challenge($series, $passphrase)

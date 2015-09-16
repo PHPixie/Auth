@@ -12,17 +12,15 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
     
     public function __construct($tokens, $httpContextContainer, $domain, $name, $configData)
     {
-        $this->tokens              = $tokens;
+        $this->tokens               = $tokens;
         $this->httpContextContainer = $httpContextContainer;
-        $this->cookieName = $configData->get('cookie', 'auth');
         
         parent::__construct($domain, $name, $configData);
     }
     
     public function check()
     {
-        $cookies = $this->cookies();
-        $encodedToken = $cookies->get($this->cookieName);
+        $encodedToken = $this->getCookie();
         
         if($encodedToken === null) {
             return null;
@@ -31,7 +29,7 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
         $token = $this->tokenHandler()->getByString($encodedToken);
         
         if($token === null) {
-            $this->forget();
+            $this->unsetCookie();
             return null;
         }
         
@@ -39,7 +37,8 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
         $user = $this->repository()->getById($userId);
         
         if($user === null) {
-            $this->forget();
+            $this->removeToken($encodedToken);
+            $this->unsetCookie();
             return null;
         }
         
@@ -71,17 +70,51 @@ class Cookie extends    \PHPixie\Auth\Providers\Provider\Implementation
     
     public function forget()
     {
-        $this->cookies()->remove($this->cookieName);
+        $encodedToken = $this->getCookie();
+        
+        if($encodedToken === null) {
+            return;
+        }
+        
+        $this->unsetCookie();
+        $this->removeToken($encodedToken);
     }
     
     protected function setCookie($token)
     {
         $cookies = $this->cookies();
         $cookies->set(
-            $this->cookieName,
+            $this->cookieName(),
             $token->string(),
             $token->expires() - time()
         );
+    }
+    
+    
+    protected function getCookie()
+    {
+        $this->cookieName();
+        return $this->cookies()->get($this->cookieName);
+    }
+
+    protected function unsetCookie()
+    {
+        $this->cookies()->remove($this->cookieName());
+    }
+    
+    protected function removeToken($encodedToken)
+    {
+        $this->tokenHandler()->removeByString($encodedToken);
+    }
+
+    protected function cookieName()
+    {
+        if($this->cookieName === null) {
+            $defaultKey = $this->domain->name().'Token';
+            $this->cookieName = $this->configData->get('cookie', $defaultKey);
+        }
+        
+        return $this->cookieName;
     }
     
     protected function tokenHandler()
