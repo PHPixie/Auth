@@ -4,39 +4,31 @@ namespace PHPixie\Auth;
 
 class Builder
 {
-    protected $database;
+    protected $security;
     protected $configData;
     protected $repositoryRegistry;
-    protected $httpContextContainer;
-    protected $authContextContainer;
+    protected $contextContainer;
     
     protected $instances = array();
     
     public function __construct(
-        $database,
+        $security,
         $configData,
         $repositoryRegistry   = null,
-        $httpContextContainer = null,
-        $authContextContainer = null
+        $contextContainer = null
     )
     {
-        $this->database             = $database;
-        $this->configData           = $configData;
-        $this->repositoryRegistry   = $repositoryRegistry;
-        $this->httpContextContainer = $httpContextContainer;
-        $this->authContextContainer = $authContextContainer;
+        $this->security           = $security;
+        $this->configData         = $configData;
+        $this->repositoryRegistry = $repositoryRegistry;
+        $this->contextContainer   = $contextContainer;
     }
     
     public function domains()
     {
         return $this->instance('domains');
     }
-    
-    public function handlers()
-    {
-        return $this->instance('handlers');
-    }
-    
+
     public function providers()
     {
         return $this->instance('providers');
@@ -49,11 +41,11 @@ class Builder
     
     public function contextContainer()
     {
-        if($this->authContextContainer === null) {
-            $this->authContextContainer = $this->buildContextContainer();
+        if($this->contextContainer === null) {
+            $this->contextContainer = $this->buildContextContainer();
         }
         
-        return $this->authContextContainer;
+        return $this->contextContainer;
     }
     
     public function context()
@@ -66,9 +58,9 @@ class Builder
         return new Context();
     }
     
-    public function buildContextContainer()
+    public function buildContextContainer($context = null)
     {
-        return new Context\Container\Implementation();
+        return new Context\Container\Implementation($context);
     }
     
     public function buildDomain($name, $configData)
@@ -94,18 +86,10 @@ class Builder
         );
     }
     
-    protected function buildHandlers()
-    {
-        return new Handlers(
-            $this->database
-        );
-    }
-    
     protected function buildProviders()
     {
         return new Providers(
-            $this->handlers(),
-            $this->httpContextContainer
+            $this->security
         );
     }
     

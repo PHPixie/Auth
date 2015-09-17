@@ -14,7 +14,9 @@ class ProvidersTest extends \PHPixie\Test\Testcase
     protected $providers;
     
     protected $types = array(
-        'password'
+        'password',
+        'session',
+        'cookie'
     );
     
     public function setUp()
@@ -56,6 +58,33 @@ class ProvidersTest extends \PHPixie\Test\Testcase
         $provider = $this->providerTest('password');
         $this->assertAttributes($provider, array(
             'passwordHandler' => $handlers['password']
+        ));
+    }
+    
+    /**
+     * @covers ::cookie
+     * @covers ::<protected>
+     */
+    public function testCookie()
+    {
+        $handlers = $this->prepareHandlers(array('tokens'));
+        
+        $provider = $this->providerTest('cookie');
+        $this->assertAttributes($provider, array(
+            'tokens' => $handlers['tokens'],
+            'httpContextContainer' => $this->httpContextContainer,
+        ));
+    }
+    
+    /**
+     * @covers ::session
+     * @covers ::<protected>
+     */
+    public function testSession()
+    {
+        $provider = $this->providerTest('session');
+        $this->assertAttributes($provider, array(
+            'httpContextContainer' => $this->httpContextContainer,
         ));
     }
     
@@ -104,7 +133,7 @@ class ProvidersTest extends \PHPixie\Test\Testcase
         $return = $this->providers->buildFromConfig($domain, 'pixie', $configData);
         $this->assertSame($provider, $return);
         
-        $this->assertNoProvider('none');
+        //$this->assertNoProvider('none');
     }
     
     protected function assertNoProvider($type)
@@ -178,5 +207,85 @@ class ProvidersTest extends \PHPixie\Test\Testcase
     protected function getSliceData()
     {
         return $this->quickMock('\PHPixie\Slice\Data');
+    }
+}
+
+
+
+<?php
+
+namespace PHPixie\Auth;
+
+class Providers
+{
+    protected $security;
+    protected $httpContextContainer;
+    protected $builders;
+    
+    protected $types = array(
+        'password',
+        'cookie',
+        'session'
+    );
+    
+    public function __construct($security, $httpContextContainer = null, $builders = array())
+    {
+        $this->security             = $security;
+        $this->httpContextContainer = $httpContextContainer;
+        foreach($builders as $builder) {
+            $this->builders[$builder->name()] = $builder;
+        }
+    }
+    
+    public function password($domain, $name, $configData)
+    {
+        return new Providers\Type\Password(
+            $this->security->password(),
+            $domain,
+            $name,
+            $configData
+        );
+    }
+    
+    public function cookie($domain, $name, $configData)
+    {
+        return new Providers\Type\Cookie(
+            $this->security->tokens(),
+            $this->httpContextContainer,
+            $domain,
+            $name,
+            $configData
+        );
+    }
+    
+    public function session($domain, $name, $configData)
+    {
+        return new Providers\Type\Session(
+            $this->httpContextContainer,
+            $domain,
+            $name,
+            $configData
+        );
+    }
+    
+    public function buildFromConfig($domain, $name, $configData)
+    {
+        $type = $configData->getRequired('type');
+        if(in_array($type, $this->types)) {
+            return $this->$type($domain, $name, $configData);
+        }
+        
+        $split = explode('.', $type, 2);
+        if(count($split) === 2) {
+            $builder = $this->builders[$split[0]];
+            return $builder->buildFromConfig(
+                $split[1],
+                $domain,
+                $name,
+                $configData
+            );
+        }
+        
+        throw new \PHPixie\Auth\Exception("Provider '$type' does not exist");
     }
 }

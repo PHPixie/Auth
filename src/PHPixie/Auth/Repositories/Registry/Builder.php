@@ -10,6 +10,9 @@ abstract class Builder implements \PHPixie\Auth\Repositories\Registry
     {
         if(!array_key_exists($name, $this->repositories)) {
             $method = 'build'.ucfirst($name).'Repository';
+            if(!method_exists($this, $method)) {
+                return null;
+            }
             $this->repositories[$name] = $this->$method();
         }
         

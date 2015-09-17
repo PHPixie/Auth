@@ -6,7 +6,7 @@ class Implementation implements \PHPixie\Auth\Context\Container
 {
     protected $context;
     
-    public function __construct($context)
+    public function __construct($context = null)
     {
         $this->context = $context;
     }

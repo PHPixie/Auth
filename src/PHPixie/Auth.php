@@ -7,19 +7,17 @@ class Auth
     protected $builder;
     
     public function __construct(
-        $database,
+        $security,
         $configData,
-        $repositoryRegistry   = null,
-        $httpContextContainer = null,
-        $authContextContainer = null
+        $repositoryRegistry = null,
+        $contextContainer   = null
     )
     {
         $this->builder = $this->buildBuilder(
-            $database,
+            $security,
             $configData,
             $repositoryRegistry,
-            $httpContextContainer,
-            $authContextContainer
+            $contextContainer
         );
     }
     
@@ -33,9 +31,9 @@ class Auth
         return $this->builder->domains()->get($name);
     }
     
-    public function buildContext()
+    public function context()
     {
-        return $this->builder->buildContext();
+        return $this->builder->context();
     }
         
     public function builder()
@@ -44,19 +42,17 @@ class Auth
     }
     
     protected function buildBuilder(
-        $database,
+        $security,
         $configData,
         $repositoryRegistry,
-        $httpContextContainer,
-        $authContextContainer
+        $contextContainer
     )
     {
         return new Auth\Builder(
-            $database,
+            $security,
             $configData,
             $repositoryRegistry,
-            $httpContextContainer,
-            $authContextContainer
+            $contextContainer
         );
     }
 }

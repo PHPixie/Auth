@@ -13,7 +13,7 @@ class PasswordTest extends \PHPixie\Tests\Auth\Providers\Provider\Implementation
     
     public function setUp()
     {
-        $this->passwordHandler = $this->quickMock('\PHPixie\Auth\Handlers\Password');
+        $this->passwordHandler = $this->quickMock('\PHPixie\Security\Password');
         
         parent::setUp();
     }

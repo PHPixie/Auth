@@ -17,7 +17,7 @@ class CookieTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationTe
     
     public function setUp()
     {
-        $this->tokens = $this->quickMock('\PHPixie\Auth\Handlers\Tokens');
+        $this->tokens = $this->quickMock('\PHPixie\Security\Tokens');
         $this->httpContextContainer = $this->quickMock('\PHPixie\HTTP\Context\Container');
         
         parent::setUp();
@@ -25,7 +25,7 @@ class CookieTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationTe
         $context = $this->quickMock('\PHPixie\HTTP\Context');
         $this->method($this->httpContextContainer, 'httpContext', $context, array());
         
-        $this->tokenHandler = $this->quickMock('\PHPixie\Auth\Handlers\Tokens\Handler');
+        $this->tokenHandler = $this->quickMock('\PHPixie\Security\Tokens\Handler');
         
         $this->cookies = $this->quickMock('\PHPixie\HTTP\Context\Cookies');
         $this->method($context, 'cookies', $this->cookies, array());
@@ -245,7 +245,7 @@ class CookieTest extends \PHPixie\Tests\Auth\Providers\Provider\ImplementationTe
     
     protected function getToken()
     {
-        return $this->quickMock('\PHPixie\Auth\Handlers\Tokens\Token');
+        return $this->quickMock('\PHPixie\Security\Tokens\Token');
     }
     
     protected function provider()

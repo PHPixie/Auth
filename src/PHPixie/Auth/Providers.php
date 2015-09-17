@@ -4,19 +4,17 @@ namespace PHPixie\Auth;
 
 class Providers
 {
-    protected $handlers;
+    protected $security;
     protected $httpContextContainer;
     protected $builders;
     
     protected $types = array(
-        'password',
-        'cookie',
-        'session'
+        'password'
     );
     
-    public function __construct($handlers, $httpContextContainer = null, $builders = array())
+    public function __construct($security, $httpContextContainer = null, $builders = array())
     {
-        $this->handlers             = $handlers;
+        $this->security             = $security;
         $this->httpContextContainer = $httpContextContainer;
         foreach($builders as $builder) {
             $this->builders[$builder->name()] = $builder;
@@ -26,34 +24,13 @@ class Providers
     public function password($domain, $name, $configData)
     {
         return new Providers\Type\Password(
-            $this->handlers->password(),
+            $this->security->password(),
             $domain,
             $name,
             $configData
         );
     }
-    
-    public function cookie($domain, $name, $configData)
-    {
-        return new Providers\Type\Cookie(
-            $this->handlers->tokens(),
-            $this->httpContextContainer,
-            $domain,
-            $name,
-            $configData
-        );
-    }
-    
-    public function session($domain, $name, $configData)
-    {
-        return new Providers\Type\Session(
-            $this->httpContextContainer,
-            $domain,
-            $name,
-            $configData
-        );
-    }
-    
+        
     public function buildFromConfig($domain, $name, $configData)
     {
         $type = $configData->getRequired('type');
