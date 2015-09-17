@@ -4,23 +4,23 @@ namespace PHPixie\Auth;
 
 class Builder
 {
-    protected $security;
     protected $configData;
     protected $repositoryRegistry;
+    protected $providerBuilders;
     protected $contextContainer;
     
     protected $instances = array();
     
     public function __construct(
-        $security,
         $configData,
-        $repositoryRegistry   = null,
-        $contextContainer = null
+        $repositoryRegistry = null,
+        $providerBuilders   = array(),
+        $contextContainer   = null
     )
     {
-        $this->security           = $security;
         $this->configData         = $configData;
         $this->repositoryRegistry = $repositoryRegistry;
+        $this->providerBuilders   = $providerBuilders;
         $this->contextContainer   = $contextContainer;
     }
     
@@ -89,7 +89,7 @@ class Builder
     protected function buildProviders()
     {
         return new Providers(
-            $this->security
+            $this->providerBuilders
         );
     }
     

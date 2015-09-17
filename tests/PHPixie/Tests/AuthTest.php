@@ -15,9 +15,9 @@ class AuthTest extends \PHPixie\Test\Testcase
     
     public function setUp()
     {
-        $this->security   = $this->quickMock('\PHPixie\Security');
         $this->configData = $this->quickMock('\PHPixie\Slice\Data');
         $this->repositoryRegistry = $this->quickMock('\PHPixie\Auth\Repositories\Registry');
+        $this->providerBuilders   = array($this->quickMock('\PHPixie\Auth\Providers\Provider'));
         $this->contextContainer   = $this->quickMock('\PHPixie\Auth\Context\Container');
         
         $this->auth = $this->getMockBuilder('\PHPixie\Auth')
@@ -27,13 +27,16 @@ class AuthTest extends \PHPixie\Test\Testcase
         
         $this->builder = $this->quickMock('\PHPixie\Auth\Builder');
         $this->method($this->auth, 'buildBuilder', $this->builder, array(
-            $this->security
+            $this->configData,
+            $this->repositoryRegistry,
+            $this->providerBuilders,
+            $this->contextContainer
         ), 0);
         
         $this->auth->__construct(
-            $this->security,
             $this->configData,
             $this->repositoryRegistry,
+            $this->providerBuilders,
             $this->contextContainer
         );
     }
@@ -54,17 +57,17 @@ class AuthTest extends \PHPixie\Test\Testcase
     public function testBuildBuilder()
     {
         $this->auth = new \PHPixie\Auth(
-            $this->security,
             $this->configData,
             $this->repositoryRegistry,
+            $this->providerBuilders,
             $this->contextContainer
         );
         
         $builder = $this->auth->builder();
         $this->assertInstance($builder, '\PHPixie\Auth\Builder', array(
-            'security'           => $this->security,
             'configData'         => $this->configData,
             'repositoryRegistry' => $this->repositoryRegistry,
+            'providerBuilders'   => $this->providerBuilders,
             'contextContainer'   => $this->contextContainer
         ));
     }

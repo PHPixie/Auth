@@ -7,16 +7,16 @@ class Auth
     protected $builder;
     
     public function __construct(
-        $security,
         $configData,
         $repositoryRegistry = null,
+        $providerBuilders   = array(),
         $contextContainer   = null
     )
     {
         $this->builder = $this->buildBuilder(
-            $security,
             $configData,
             $repositoryRegistry,
+            $providerBuilders,
             $contextContainer
         );
     }
@@ -42,16 +42,16 @@ class Auth
     }
     
     protected function buildBuilder(
-        $security,
         $configData,
         $repositoryRegistry,
+        $providerBuilders,
         $contextContainer
     )
     {
         return new Auth\Builder(
-            $security,
             $configData,
             $repositoryRegistry,
+            $providerBuilders,
             $contextContainer
         );
     }

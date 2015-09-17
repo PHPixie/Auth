@@ -7,24 +7,24 @@ namespace PHPixie\Tests\Auth;
  */
 class BuilderTest extends \PHPixie\Test\Testcase
 {
-    protected $security;
     protected $configData;
     protected $repositoryRegistry;
+    protected $providerBuilders;
     protected $contextContainer;
     
     protected $builder;
     
     public function setUp()
     {
-        $this->security   = $this->quickMock('\PHPixie\Security');
         $this->configData = $this->getSliceData();
         $this->repositoryRegistry = $this->quickMock('\PHPixie\Auth\Repositories\Registry');
+        $this->providerBuilders   = array($this->quickMock('\PHPixie\Auth\Providers\Provider'));
         $this->contextContainer   = $this->getContextContainer();
         
         $this->builder = new \PHPixie\Auth\Builder(
-            $this->security,
             $this->configData,
             $this->repositoryRegistry,
+            $this->providerBuilders,
             $this->contextContainer
         );
     }
@@ -59,8 +59,11 @@ class BuilderTest extends \PHPixie\Test\Testcase
      */
     public function testProviders()
     {
+        $builder = $this->providerBuilders[0];
+        $this->method($builder, 'name', 'trixie', array(), 0);
+        
         $this->instanceTest('providers', '\PHPixie\Auth\Providers', array(
-            'security' => $this->security
+            'builders' => array('trixie' => $builder)
         ));
     }
     
@@ -133,9 +136,9 @@ class BuilderTest extends \PHPixie\Test\Testcase
             '\PHPixie\Auth\Builder',
             array('buildContextContainer'),
             array(
-                $this->security,
                 $this->configData,
-                $this->repositoryRegistry
+                $this->repositoryRegistry,
+                $this->providerBuilders
             )
         );
         

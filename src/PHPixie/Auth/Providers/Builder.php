@@ -5,5 +5,5 @@ namespace PHPixie\Auth\Providers;
 interface Builder
 {
     public function name();
-    public function buildFromConfig($type, $domain, $name, $configData);
+    public function buildProvider($type, $domain, $name, $configData);
 }
