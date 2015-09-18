@@ -35,7 +35,7 @@ class ImplementationTest extends \PHPixie\Test\Testcase
         ));
     }
     
-    protected function providerTest($type)
+    protected function providerTest($type, $class, $attributes = array())
     {
         $domain     = $this->getDomain();
         $configData = $this->getSliceData();
@@ -44,21 +44,17 @@ class ImplementationTest extends \PHPixie\Test\Testcase
         $providers = $this->providers;
         $provider = $providers->$method($domain, 'pixie', $configData);
         
-        $class = '\PHPixie\Auth\Providers\Type\\'.ucfirst($type);
-        $this->assertInstance($provider, $class, array(
-            'domain'     => $domain,
-            'name'       => 'pixie',
-            'configData' => $configData
-        ));
+        $attributes = array_merge(
+            array(
+                'domain'     => $domain,
+                'name'       => 'pixie',
+                'configData' => $configData
+            ),
+            $attributes
+        );
+        $this->assertInstance($provider, $class, $attributes);
         
         return $provider;
-    }
-    
-    protected function assertAttributes($instance, $propertyMap)
-    {
-        foreach($propertyMap as $name => $value) {
-            $this->assertAttributeEquals($value, $name, $instance);
-        }
     }
     
     protected function getDomain()
