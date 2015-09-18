@@ -35,6 +35,32 @@ class BuilderTest extends \PHPixie\Test\Testcase
         ));
     }
     
+    protected function providerTest($type)
+    {
+        $domain     = $this->getDomain();
+        $configData = $this->getSliceData();
+        
+        $method = 'build'.ucfirst($type).'Provider';
+        $providers = $this->providers;
+        $provider = $providers->$method($domain, 'pixie', $configData);
+        
+        $class = '\PHPixie\Auth\Providers\Type\\'.ucfirst($type);
+        $this->assertInstance($provider, $class, array(
+            'domain'     => $domain,
+            'name'       => 'pixie',
+            'configData' => $configData
+        ));
+        
+        return $provider;
+    }
+    
+    protected function assertAttributes($instance, $propertyMap)
+    {
+        foreach($propertyMap as $name => $value) {
+            $this->assertAttributeEquals($value, $name, $instance);
+        }
+    }
+    
     protected function getDomain()
     {
         return $this->quickMock('\PHPixie\Auth\Domains\Domain');
