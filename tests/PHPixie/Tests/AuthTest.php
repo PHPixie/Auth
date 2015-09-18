@@ -123,4 +123,16 @@ class AuthTest extends \PHPixie\Test\Testcase
         
         $this->assertSame($context, $this->auth->context());
     }
+    
+    /**
+     * @covers ::buildContext
+     * @covers ::<protected>
+     */
+    public function testBuildContext()
+    {
+        $context = $this->quickMock('\PHPixie\Auth\Context');
+        $this->method($this->builder, 'buildContext', $context, array(), 0);
+        
+        $this->assertSame($context, $this->auth->buildContext());
+    }
 }

@@ -35,6 +35,11 @@ class Auth
     {
         return $this->builder->context();
     }
+    
+    public function buildContext()
+    {
+        return $this->builder->buildContext();
+    }
         
     public function builder()
     {
