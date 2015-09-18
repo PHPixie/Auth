@@ -5,7 +5,7 @@ namespace PHPixie\Tests\Auth\Providers\Builder;
 /**
  * @coversDefaultClass \PHPixie\Auth\Providers\Builder\Implementation
  */
-class BuilderTest extends \PHPixie\Test\Testcase
+class ImplementationTest extends \PHPixie\Test\Testcase
 {
     /**
      * @covers ::buildPovider
