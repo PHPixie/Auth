@@ -17,8 +17,8 @@ Authentication is the most critical part of any application, implementing it the
 
 ## What makes it secure
 
- * Using the secure password_hash() in PHP 7 and a compatibilty package for PHP 5
- * Same for the crryptographically secure random_bytes()
+ * Using the secure password_hash() in PHP 5.5 and a compatibilty package for older PHP versions
+ * Same for the crryptographically secure random_bytes() from PHP 7
  * Following the [best practices](http://jaspan.com/improved_persistent_login_cookie_best_practice) for persisted login
 
 The last point is the most interesting and currently no other framework supports it out of the box. The idea behind it lies
