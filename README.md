@@ -1,5 +1,5 @@
 # Auth
-PPHPixie Authentication library
+PHPixie Authentication library
 
 [![Build Status](https://travis-ci.org/PHPixie/Auth.svg?branch=master)](https://travis-ci.org/PHPixie/Auth)
 [![Test Coverage](https://codeclimate.com/github/PHPixie/Auth/badges/coverage.svg)](https://codeclimate.com/github/PHPixie/Auth)
