@@ -132,12 +132,13 @@ class Repository extends \PHPixie\AuthORM\Repositories\Type\Login
 namespace Project\App\ORMWrappers\User;
 
 // Entity wrapper
-class User extends \PHPixie\AuthORM\Repositories\Type\Login\User
+class Entity extends \PHPixie\AuthORM\Repositories\Type\Login\User
 {
-    // return stored password hash
-    protected function passwordHash()
+    // get hashed password value
+    // from the field in the database
+    public function passwordHash()
     {
-         return $this->password;
+         return $this->passwordHash;
     }
 }
 ```
