@@ -159,7 +159,7 @@ class ORMWrappers extends \PHPixie\ORM\Wrappers\Implementation
         return new ORMWrappers\User\Entity($entity);
     }
     
-    public function userRepisitory($repository)
+    public function userRepository($repository)
     {
         return new ORMWrappers\User\Repository($repository);
     }
