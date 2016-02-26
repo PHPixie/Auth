@@ -42,7 +42,8 @@ class Builder
     public function contextContainer()
     {
         if($this->contextContainer === null) {
-            $this->contextContainer = $this->buildContextContainer();
+            $context = $this->buildContext();
+            $this->contextContainer = $this->buildContextContainer($context);
         }
         
         return $this->contextContainer;
