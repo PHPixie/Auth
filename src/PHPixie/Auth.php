@@ -2,6 +2,8 @@
 
 namespace PHPixie;
 
+use PHPixie\Auth\Domains\Domain;
+
 class Auth
 {
     protected $builder;
@@ -25,7 +27,11 @@ class Auth
     {
         return $this->builder->domains();
     }
-    
+
+    /**
+     * @param string $name
+     * @return Domain
+     */
     public function domain($name = 'default')
     {
         return $this->builder->domains()->get($name);
