@@ -4,23 +4,45 @@ namespace PHPixie\Auth;
 
 class Domains
 {
+    /**
+     * @var Builder
+     */
     protected $builder;
+
+    /**
+     * @var \PHPixie\Slice\Type\ArrayData
+     */
     protected $configData;
-    
+
+    /**
+     * @var Domains\Domain[]
+     */
     protected $domains = null;
-    
+
+    /**
+     * @param Builder $builder
+     * @param \PHPixie\Slice\Type\ArrayData $configData
+     */
     public function __construct($builder, $configData)
     {
         $this->builder    = $builder;
         $this->configData = $configData;
     }
-    
+
+    /**
+     * @return Domains\Domain[]
+     */
     public function asArray()
     {
         $this->requireDomains();
         return $this->domains;
     }
-    
+
+    /**
+     * @param string $name
+     * @return Domains\Domain
+     * @throws Exception
+     */
     public function get($name)
     {
         $this->requireDomains();

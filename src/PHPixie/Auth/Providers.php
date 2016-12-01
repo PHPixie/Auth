@@ -4,15 +4,28 @@ namespace PHPixie\Auth;
 
 class Providers
 {
+    /**
+     * @var Providers\Builder[]
+     */
     protected $builders;
-    
+
+    /**
+     * @param Providers\Builder[] $builders
+     */
     public function __construct($builders = array())
     {
         foreach($builders as $builder) {
             $this->builders[$builder->name()] = $builder;
         }
     }
-    
+
+    /**
+     * @param Domains\Domain                $domain
+     * @param string                        $name
+     * @param \PHPixie\Slice\Type\ArrayData $configData
+     * @return Providers\Provider
+     * @throws Exception
+     */
     public function buildFromConfig($domain, $name, $configData)
     {
         $type = $configData->getRequired('type');
