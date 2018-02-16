@@ -8,7 +8,7 @@ namespace PHPixie\Tests\Auth\Providers\Builder;
 class ImplementationTest extends \PHPixie\Test\Testcase
 {
     /**
-     * @covers ::buildPovider
+     * @covers ::buildProvider
      * @covers ::<protected>
      */
     public function testBuildProvider()
