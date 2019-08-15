@@ -201,8 +201,7 @@ class Facebook extends Provider {
 				."&client_secret={$this->app_secret}"
 				."&code={$code}";
 		$response = $this->request($url);
-		parse_str($response, $params);
-		return $params;
+		return json_decode($response, true);
 	}
 	
 	/**
